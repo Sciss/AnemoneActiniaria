@@ -51,7 +51,8 @@ class Anemone extends Wolkenpumpe[InMemory] {
       // NamedBusConfig("m-at "  ,  0, 2)
     )
     sCfg.lineInputs         = Vector(
-      NamedBusConfig("pirro", 4, 1)
+      NamedBusConfig("pirro", 4, 1),
+      NamedBusConfig("beat" , 5, 1)
     )
     sCfg.lineOutputs        = Vector(
       NamedBusConfig("sum", 5, 1)
@@ -67,7 +68,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
 
     aCfg.wireBuffers        = 512 // 1024
     aCfg.audioBuffers       = 4096
-    aCfg.blockSize          = 128
+    // aCfg.blockSize          = 128
   }
 
   private def mix(in: GE, flt: GE, mix: GE): GE = LinXFade2.ar(in, flt, mix * 2 - 1)
@@ -106,12 +107,87 @@ class Anemone extends Wolkenpumpe[InMemory] {
                                            nuages: Nuages[S], aural: AuralSystem): Unit = {
     super.registerProcesses(sCfg, nCfg)
 
+    generator("a~pulse") {
+      import synth._; import ugen._
+      val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
+      val pW      = pAudio("width"    , ParamSpec(0.0 ,     1.0),        default =  0.5)
+      val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+      val pFreqMix= pAudio("freq-src" , ParamSpec(0, 1, step = 1), default = 0)
+      val pWMix   = pAudio("width-src", ParamSpec(0, 1, step = 1), default = 0)
+
+      val inFreq  = pAudioIn("in-freq" , 1, ParamSpec(0.1 , 10000, ExpWarp))
+      val inW     = pAudioIn("in-width", 1, ParamSpec(0, 1))
+
+      val freq  = LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
+      val width = LinXFade2.ar(pW, inW, pWMix * 2 - 1)
+      val sig   = Pulse.ar(freq, width)
+
+      sig * pAmp
+    }
+
+    generator("a~rand") {
+      import synth._; import ugen._
+      val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
+      val pHi     = pAudio("hi"     , ParamSpec(0.0 , 1), default = 1)
+      val pQuant  = pAudio("quant"  , ParamSpec(0.0 , 1), default = 0)
+      val inTrig  = pAudioIn("tr" , 1, ParamSpec(0, 1))
+      // val sig     = TRand.ar(pLo, pHi, inTrig)
+      val sig0    = K2A.ar(TRand.kr(0 /* A2K.kr(pLo) */ , 1 /* A2K.kr(pHi) */, T2K.kr(inTrig)))
+      val sig     = sig0.roundTo(pQuant).linlin(0, 1, pLo, pHi)
+      // sig.poll(inTrig, "rand")
+      sig
+    }
+
+    filter("a~delay") { in =>
+      import synth._; import ugen._
+      val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
+      val sig     = DelayN.ar(in, pTime, 1.0)
+      sig
+    }
+
+    filter("a~reso") { in =>
+      import synth._; import ugen._
+      val pFreq   = pAudio("freq"     , ParamSpec(30  , 13000, ExpWarp), default = 400) // beware of the upper frequency
+      val pQ      = pAudio("q"        , ParamSpec( 0.5,    50, ExpWarp), default =   1)
+      val pMix    = mkMix()
+      val inFreq  = pAudioIn("in-freq", 1, ParamSpec(30  , 13000, ExpWarp))
+      val pFreqMix= pAudio  ("freq-src"  , ParamSpec(0, 1, step = 1), default = 0)
+      val inQ     = pAudioIn("in-q"   , 1, ParamSpec( 0.5,    50, ExpWarp))
+      val pQMix   = pAudio  ("q-src"     , ParamSpec(0, 1, step = 1), default = 0)
+
+      val freq    = Lag.ar(LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1))
+      val pq0     = Lag.ar(LinXFade2.ar(pQ, inQ, pQMix * 2 - 1))
+      val rq      = pq0.reciprocal
+      val makeUp  = pq0
+      val flt     = Resonz.ar(in, freq, rq) * makeUp
+      mix(in, flt, pMix)
+    }
+
+    generator("a~beat") {
+      import synth._; import ugen._
+      val in      = (PhysicalIn.ar(5) - 0.1) > 0
+      val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
+      val pulse   = PulseDivider.ar(in, pDiv)
+      val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
+      val sig     = DelayN.ar(pulse, 1.0, pTime)
+      sig
+    }
+
+    generator("a~ff") {
+      import synth._; import ugen._
+      val pLo     = pAudio("lo"    , ParamSpec(0.0, 1.0), default = 0.0)
+      val pHi     = pAudio("hi"    , ParamSpec(0.0, 1.0), default = 1.0)
+      val inTrig  = pAudioIn("trig", 1, ParamSpec(0.0, 1.0))
+
+      val sig     = ToggleFF.ar(inTrig).linlin(0, 1, pLo, pHi)
+      sig
+    }
+
     filter("L-lpf") { in =>
-      import de.sciss.synth._
-      import de.sciss.synth.ugen._
+      import synth._; import ugen._
       val fade  = mkMix4()
       val freq  = fade.linexp(1, 0, 22.05 * 2, 20000) // 22050
-    val wet   = LPF.ar(in, freq)
+      val wet   = LPF.ar(in, freq)
       mkBlend(in, wet, fade)
     }
 
@@ -147,13 +223,13 @@ class Anemone extends Wolkenpumpe[InMemory] {
       import synth._; import ugen._
       val fade    = mkMix4()
       val numSteps = 16 // 10
-    val x        = (1 - fade) * numSteps
+      val x        = (1 - fade) * numSteps
       val xh       = x / 2
       val a        = (xh + 0.5).floor        * 2
       val b0       = (xh       .floor + 0.5) * 2
       val b        = b0.min(numSteps)
       val ny       = 20000 // 22050
-    val zero     = 22.05
+      val zero     = 22.05
       val aFreq    = a.linexp(numSteps, 0, zero, ny) - zero
       val bFreq    = b.linexp(numSteps, 0, zero, ny) - zero
       val freq: GE = Seq(aFreq, bFreq)
@@ -179,7 +255,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val b        = b0.min(numSteps)
       val fd: GE   = Seq(a, b)
       val ny       = 20000 // 20000 // 22050
-    val zero     = 22.05
+      val zero     = 22.05
       val freq1    = fd.linexp(0, numSteps, ny, zero)
       val freq2    = fd.linexp(0, numSteps, zero, ny) - zero
 
@@ -188,8 +264,8 @@ class Anemone extends Wolkenpumpe[InMemory] {
 
       val zig = x.fold(0, 1)
       val az  = zig      // .sqrt
-    val bz  = 1 - zig  // .sqrt
-    val wet = az * (z0 \ 1 /* aka ceil */) + bz * (z0 \ 0 /* aka floor */)
+      val bz  = 1 - zig  // .sqrt
+      val wet = az * (z0 \ 1 /* aka ceil */) + bz * (z0 \ 0 /* aka floor */)
 
       mkBlend(in, wet, fade)
     }

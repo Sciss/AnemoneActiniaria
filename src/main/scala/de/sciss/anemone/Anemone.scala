@@ -31,7 +31,9 @@ object Anemone {
   case class Config(masterChannels: Range, soloChannels: Range,
                     micInputs  : Vec[NamedBusConfig],
                     lineInputs : Vec[NamedBusConfig],
-                    lineOutputs: Vec[NamedBusConfig])
+                    lineOutputs: Vec[NamedBusConfig],
+                    device: Option[String] = None
+  )
 
   val FirefaceConfig = Config(
     masterChannels  = 0 until 6,
@@ -52,16 +54,17 @@ object Anemone {
     masterChannels  = 2 to 6,
     soloChannels    = 0 to 1,
     micInputs       = Vector(
-      NamedBusConfig("m-at" , 0, 1),
-      NamedBusConfig("m-dpa", 1, 1)
+      NamedBusConfig("m-at" , 14, 2),
+      NamedBusConfig("m-dpa", 16, 1)
     ),
     lineInputs      = Vector(
-      NamedBusConfig("beat" , 2, 1),
-      NamedBusConfig("pirro", 3, 1)
+      NamedBusConfig("beat" , 18, 1),
+      NamedBusConfig("pirro", 19, 1)
     ),
     lineOutputs     = Vector(
       NamedBusConfig("sum", 8, 2)
-    )
+    ),
+    device=Some("MOTU 828mk2")
   )
 
   val config: Config = MOTUConfig
@@ -81,7 +84,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
   override protected def configure(sCfg: ScissProcs.ConfigBuilder, nCfg: Nuages.ConfigBuilder,
                                    aCfg: Server.ConfigBuilder): Unit = {
     super.configure(sCfg, nCfg, aCfg)
-    // sCfg.generatorChannels  = 4 // ?
+    // sCfg.generatorChannels  = 0 // 4 // ?
     sCfg.micInputs          = config.micInputs
     sCfg.lineInputs         = config.lineInputs
     sCfg.lineOutputs        = config.lineOutputs
@@ -96,6 +99,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
     aCfg.wireBuffers        = 512 // 1024
     aCfg.audioBuffers       = 4096
     // aCfg.blockSize          = 128
+    if (config.device.isDefined) aCfg.deviceName = config.device
   }
 
   private def mix(in: GE, flt: GE, mix: GE): GE = LinXFade2.ar(in, flt, mix * 2 - 1)
@@ -180,7 +184,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val sig     = DelayN.ar(in, pTime, 1.0)
       sig
     }
-
+/*
     filter("a~reso") { in =>
       import synth._; import ugen._
       val pFreq   = pAudio("freq"     , ParamSpec(30  , 13000, ExpWarp), default = 400) // beware of the upper frequency
@@ -198,14 +202,24 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val flt     = Resonz.ar(in, freq, rq) * makeUp
       mix(in, flt, pMix)
     }
-
+*/
     generator("a~beat") {
       import synth._; import ugen._
-      val in      = (PhysicalIn.ar(2) - 0.1) > 0
+      val off     = sCfg.lineInputs.find(_.name == "beat").get.offset
+      val in      = (PhysicalIn.ar(off) - 0.1) > 0
       val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
       val pulse   = PulseDivider.ar(in, pDiv)
       val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
       val sig     = DelayN.ar(pulse, 1.0, pTime)
+      sig
+    }
+
+    generator("a~dpa") {
+      import synth._; import ugen._
+      val off = sCfg.micInputs.find(_.name == "m-dpa").get.offset
+      val in  = PhysicalIn.ar(off)
+      val gain = pAudio("gain", ParamSpec(-20, 20), default = 0).dbamp
+      val sig  = in * gain
       sig
     }
 

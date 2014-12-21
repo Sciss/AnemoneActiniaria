@@ -25,10 +25,47 @@ import de.sciss.synth.ugen.{Constant, LinXFade2}
 import de.sciss.synth.{GE, Server}
 import de.sciss.synth.proc.AuralSystem
 
+import scala.collection.immutable.{IndexedSeq => Vec}
+
 object Anemone {
-  val MasterChannels  = 0 until 6
-  val SoloChannels    = 6 until 8
-  
+  case class Config(masterChannels: Range, soloChannels: Range,
+                    micInputs  : Vec[NamedBusConfig],
+                    lineInputs : Vec[NamedBusConfig],
+                    lineOutputs: Vec[NamedBusConfig])
+
+  val FirefaceConfig = Config(
+    masterChannels  = 0 until 6,
+    soloChannels    = 6 until 8,
+    micInputs       = Vector(
+      NamedBusConfig("m-dpa", 0, 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 4, 1),
+      NamedBusConfig("beat" , 5, 1)
+    ),
+    lineOutputs     = Vector(
+      NamedBusConfig("sum", 5, 1)
+    )
+  )
+
+  val MOTUConfig = Config(
+    masterChannels  = 2 to 6,
+    soloChannels    = 0 to 1,
+    micInputs       = Vector(
+      NamedBusConfig("m-at" , 0, 1),
+      NamedBusConfig("m-dpa", 1, 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("beat" , 2, 1),
+      NamedBusConfig("pirro", 3, 1)
+    ),
+    lineOutputs     = Vector(
+      NamedBusConfig("sum", 8, 2)
+    )
+  )
+
+  val config: Config = MOTUConfig
+
   def main(args: Array[String]): Unit = {
     implicit val system = InMemory()
     defer(WebLookAndFeel.install())
@@ -45,25 +82,15 @@ class Anemone extends Wolkenpumpe[InMemory] {
                                    aCfg: Server.ConfigBuilder): Unit = {
     super.configure(sCfg, nCfg, aCfg)
     // sCfg.generatorChannels  = 4 // ?
-    sCfg.micInputs          = Vector(
-      NamedBusConfig("m-dpa", 0, 1)
-      // NamedBusConfig("m-dpa"  ,  2, 1),
-      // NamedBusConfig("m-at "  ,  0, 2)
-    )
-    sCfg.lineInputs         = Vector(
-      NamedBusConfig("pirro", 4, 1),
-      NamedBusConfig("beat" , 5, 1)
-    )
-    sCfg.lineOutputs        = Vector(
-      NamedBusConfig("sum", 5, 1)
-      // NamedBusConfig("sum", 44, 2)
-    )
+    sCfg.micInputs          = config.micInputs
+    sCfg.lineInputs         = config.lineInputs
+    sCfg.lineOutputs        = config.lineOutputs
     // sCfg.highPass           = 100
     sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
-    nCfg.masterChannels     = Some(MasterChannels)
-    nCfg.soloChannels       = Some(SoloChannels)
+    nCfg.masterChannels     = Some(config.masterChannels)
+    nCfg.soloChannels       = Some(config.soloChannels)
     nCfg.recordPath         = Some("/tmp")
 
     aCfg.wireBuffers        = 512 // 1024
@@ -112,15 +139,23 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
       val pW      = pAudio("width"    , ParamSpec(0.0 ,     1.0),        default =  0.5)
       val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
-      val pFreqMix= pAudio("freq-src" , ParamSpec(0, 1, step = 1), default = 0)
-      val pWMix   = pAudio("width-src", ParamSpec(0, 1, step = 1), default = 0)
 
-      val inFreq  = pAudioIn("in-freq" , 1, ParamSpec(0.1 , 10000, ExpWarp))
-      val inW     = pAudioIn("in-width", 1, ParamSpec(0, 1))
+      val freq  = pFreq // LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
+      val width = pW // LinXFade2.ar(pW, inW, pWMix * 2 - 1)
+      val sig   = LFPulse.ar(freq, width)
 
-      val freq  = LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
-      val width = LinXFade2.ar(pW, inW, pWMix * 2 - 1)
-      val sig   = Pulse.ar(freq, width)
+      sig * pAmp
+    }
+
+    generator("a~pulse") {
+      import synth._; import ugen._
+      val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
+      val pW      = pAudio("width"    , ParamSpec(0.0 ,     1.0),        default =  0.5)
+      val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+
+      val freq  = pFreq // LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
+      val width = pW // LinXFade2.ar(pW, inW, pWMix * 2 - 1)
+      val sig   = LFPulse.ar(freq, width)
 
       sig * pAmp
     }
@@ -130,7 +165,8 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
       val pHi     = pAudio("hi"     , ParamSpec(0.0 , 1), default = 1)
       val pQuant  = pAudio("quant"  , ParamSpec(0.0 , 1), default = 0)
-      val inTrig  = pAudioIn("tr" , 1, ParamSpec(0, 1))
+      // val inTrig  = pAudioIn("tr" , 1, ParamSpec(0, 1))
+      val inTrig  = pAudio("tr", ParamSpec(0, 1), default = 0)
       // val sig     = TRand.ar(pLo, pHi, inTrig)
       val sig0    = K2A.ar(TRand.kr(0 /* A2K.kr(pLo) */ , 1 /* A2K.kr(pHi) */, T2K.kr(inTrig)))
       val sig     = sig0.roundTo(pQuant).linlin(0, 1, pLo, pHi)
@@ -165,7 +201,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
 
     generator("a~beat") {
       import synth._; import ugen._
-      val in      = (PhysicalIn.ar(5) - 0.1) > 0
+      val in      = (PhysicalIn.ar(2) - 0.1) > 0
       val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
       val pulse   = PulseDivider.ar(in, pDiv)
       val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
@@ -177,7 +213,8 @@ class Anemone extends Wolkenpumpe[InMemory] {
       import synth._; import ugen._
       val pLo     = pAudio("lo"    , ParamSpec(0.0, 1.0), default = 0.0)
       val pHi     = pAudio("hi"    , ParamSpec(0.0, 1.0), default = 1.0)
-      val inTrig  = pAudioIn("trig", 1, ParamSpec(0.0, 1.0))
+      // val inTrig  = pAudioIn("trig", 1, ParamSpec(0.0, 1.0))
+      val inTrig  = pAudio("trig", ParamSpec(0.0, 1.0), default = 0)
 
       val sig     = ToggleFF.ar(inTrig).linlin(0, 1, pLo, pHi)
       sig

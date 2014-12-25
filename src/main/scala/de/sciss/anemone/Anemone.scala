@@ -260,6 +260,52 @@ class Anemone extends Wolkenpumpe[InMemory] {
       }
     }
 
+    filter("a~skew") { in =>
+      val pLo     = pAudio("lo" , ParamSpec(0, 1), default = 0)
+      val pHi     = pAudio("hi" , ParamSpec(0, 1), default = 1)
+      val pPow    = pAudio("pow", ParamSpec(0.125, 8, ExpWarp), default = 1)
+      val pRound  = pAudio("rnd", ParamSpec(0, 1), default = 0)
+
+      val pMix    = mkMix()
+
+      val sig = in.clip(0, 1).pow(pPow).linlin(0, 1, pLo, pHi).roundTo(pRound)
+      mix(in, sig, pMix)
+    }
+
+    filter("a~gate") { in =>
+      import synth._; import ugen._
+      val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
+      val pGate   = pAudio("gate", ParamSpec(0.0, 1.0), default = 0) > pThresh
+      val pLeak   = pAudio("leak", ParamSpec(0.0, 1.0, step = 1), default = 0) > pThresh
+      val pMix    = mkMix()
+      val sig0    = Gate.ar(in, pGate)
+      val leak    = LeakDC.ar(sig0)
+      val sig     = Select.ar(pLeak, Seq(sig0, leak))
+      mix(in, sig, pMix)
+    }
+
+    sCfg.lineInputs.find(_.name == "i-lh").foreach { cfg =>
+      generator("a~lh") {
+        import synth._; import ugen._
+        val off     = cfg.offset
+        val in      = PhysicalIn.ar(off)
+        val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+        val sig     = in * pAmp
+        sig
+      }
+    }
+
+    sCfg.lineInputs.find(_.name == "i-mkv").foreach { cfg =>
+      generator("a~mkv") {
+        import synth._; import ugen._
+        val off     = cfg.offset
+        val in      = PhysicalIn.ar(off)
+        val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+        val sig     = in * pAmp
+        sig
+      }
+    }
+
     sCfg.micInputs.find(_.name == "m-dpa").foreach { cfg =>
       generator("a~dpa") {
         import synth._; import ugen._
@@ -279,6 +325,18 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val inTrig  = pAudio("trig", ParamSpec(0.0, 1.0), default = 0)
 
       val sig     = ToggleFF.ar(inTrig).linlin(0, 1, pLo, pHi)
+      sig
+    }
+
+    generator("a~trig") {
+      import synth._; import ugen._
+      val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
+      val pLo     = pAudio("lo"    , ParamSpec(0.0, 1.0), default = 0.0)
+      val pHi     = pAudio("hi"    , ParamSpec(0.0, 1.0), default = 1.0)
+      val inTrig  = pAudio("trig"  , ParamSpec(0.0, 1.0), default = 0)
+      val pDur    = pAudio("dur"   , ParamSpec(0.001, 1.0, ExpWarp), default = 0.01)
+
+      val sig     = Trig1.ar(inTrig - pThresh, pDur).linlin(0, 1, pLo, pHi)
       sig
     }
 

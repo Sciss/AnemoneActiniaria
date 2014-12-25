@@ -14,6 +14,7 @@
 package de.sciss.anemone
 
 import com.alee.laf.WebLookAndFeel
+import de.sciss.desktop.Desktop
 
 import de.sciss.file._
 import de.sciss.lucre.stm
@@ -32,6 +33,7 @@ object Anemone {
                     micInputs  : Vec[NamedBusConfig],
                     lineInputs : Vec[NamedBusConfig],
                     lineOutputs: Vec[NamedBusConfig],
+                    generatorChannels: Int = 0,
                     device: Option[String] = None
   )
 
@@ -64,10 +66,29 @@ object Anemone {
     lineOutputs     = Vector(
       NamedBusConfig("sum", 8, 2)
     ),
-    device=Some("MOTU 828mk2")
+    device = if (Desktop.isMac) Some("MOTU 828mk2") else None
   )
 
-  val config: Config = MOTUConfig
+  val Bremen = Config(
+    masterChannels    = 2 to 5,
+    soloChannels      = 0 to 1,
+    generatorChannels = 2,
+    micInputs         = Vector(
+      NamedBusConfig("m-at" , 14, 2),
+      NamedBusConfig("m-dpa", 16, 1)
+    ),
+    lineInputs        = Vector(
+      NamedBusConfig("i-lh" , 18, 2),
+      NamedBusConfig("i-mkv", 20, 2)
+    ),
+    lineOutputs       = Vector(
+      NamedBusConfig("sum1", 6, 2),
+      NamedBusConfig("sum2", 8, 2)
+    ),
+    device = if (Desktop.isMac) Some("MOTU 828mk2") else None
+  )
+
+  val config: Config = Bremen
 
   def main(args: Array[String]): Unit = {
     implicit val system = InMemory()
@@ -84,7 +105,8 @@ class Anemone extends Wolkenpumpe[InMemory] {
   override protected def configure(sCfg: ScissProcs.ConfigBuilder, nCfg: Nuages.ConfigBuilder,
                                    aCfg: Server.ConfigBuilder): Unit = {
     super.configure(sCfg, nCfg, aCfg)
-    // sCfg.generatorChannels  = 0 // 4 // ?
+    sCfg.generatorChannels  = config.generatorChannels
+    // println(s"generatorChannels ${sCfg.generatorChannels}")
     sCfg.micInputs          = config.micInputs
     sCfg.lineInputs         = config.lineInputs
     sCfg.lineOutputs        = config.lineOutputs
@@ -94,7 +116,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)
     nCfg.soloChannels       = Some(config.soloChannels)
-    nCfg.recordPath         = Some("/tmp")
+    nCfg.recordPath         = Some((userHome / "Music" / "rec").path)
 
     aCfg.wireBuffers        = 512 // 1024
     aCfg.audioBuffers       = 4096

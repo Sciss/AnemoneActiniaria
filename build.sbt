@@ -10,7 +10,7 @@ licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.
 
 homepage           := Some(url("https://github.com/Sciss/" + name.value))
 
-lazy val wolkenpumpeVersion   = "1.0.0"
+lazy val wolkenpumpeVersion   = "1.1.0-SNAPSHOT"
 
 lazy val webLaFVersion        = "1.28"
 

@@ -82,8 +82,8 @@ object Anemone {
       NamedBusConfig("i-mkv", 20, 2)
     ),
     lineOutputs       = Vector(
-      NamedBusConfig("sum1", 6, 2),
-      NamedBusConfig("sum2", 8, 2)
+      NamedBusConfig("sum1", 6, 2)
+      // NamedBusConfig("sum2", 8, 2)
     ),
     device = if (Desktop.isMac) Some("MOTU 828mk2") else None
   )
@@ -173,19 +173,6 @@ class Anemone extends Wolkenpumpe[InMemory] {
       sig * pAmp
     }
 
-    generator("a~pulse") {
-      import synth._; import ugen._
-      val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
-      val pW      = pAudio("width"    , ParamSpec(0.0 ,     1.0),        default =  0.5)
-      val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
-
-      val freq  = pFreq // LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
-      val width = pW // LinXFade2.ar(pW, inW, pWMix * 2 - 1)
-      val sig   = LFPulse.ar(freq, width)
-
-      sig * pAmp
-    }
-
     generator("a~rand") {
       import synth._; import ugen._
       val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
@@ -225,24 +212,28 @@ class Anemone extends Wolkenpumpe[InMemory] {
       mix(in, flt, pMix)
     }
 */
-    generator("a~beat") {
-      import synth._; import ugen._
-      val off     = sCfg.lineInputs.find(_.name == "beat").get.offset
-      val in      = (PhysicalIn.ar(off) - 0.1) > 0
-      val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
-      val pulse   = PulseDivider.ar(in, pDiv)
-      val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
-      val sig     = DelayN.ar(pulse, 1.0, pTime)
-      sig
+    sCfg.lineInputs.find(_.name == "beat").foreach { cfg =>
+      generator("a~beat") {
+        import synth._; import ugen._
+        val off     = cfg.offset
+        val in      = (PhysicalIn.ar(off) - 0.1) > 0
+        val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
+        val pulse   = PulseDivider.ar(in, pDiv)
+        val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
+        val sig     = DelayN.ar(pulse, 1.0, pTime)
+        sig
+      }
     }
 
-    generator("a~dpa") {
-      import synth._; import ugen._
-      val off = sCfg.micInputs.find(_.name == "m-dpa").get.offset
-      val in  = PhysicalIn.ar(off)
-      val gain = pAudio("gain", ParamSpec(-20, 20), default = 0).dbamp
-      val sig  = in * gain
-      sig
+    sCfg.micInputs.find(_.name == "m-dpa").foreach { cfg =>
+      generator("a~dpa") {
+        import synth._; import ugen._
+        val off = cfg.offset
+        val in  = PhysicalIn.ar(off)
+        val gain = pAudio("gain", ParamSpec(-20, 20), default = 0).dbamp
+        val sig  = in * gain
+        sig
+      }
     }
 
     generator("a~ff") {

@@ -116,7 +116,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)
     nCfg.soloChannels       = Some(config.soloChannels)
-    nCfg.recordPath         = Some((userHome / "Music" / "rec").path)
+    nCfg.recordPath         = Some((userHome / "Music" / "rec").path) // XXX has no effect?
 
     aCfg.wireBuffers        = 512 // 1024
     aCfg.audioBuffers       = 4096
@@ -164,13 +164,47 @@ class Anemone extends Wolkenpumpe[InMemory] {
       import synth._; import ugen._
       val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
       val pW      = pAudio("width"    , ParamSpec(0.0 ,     1.0),        default =  0.5)
-      val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+      // val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+      val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
+      val pHi     = pAudio("hi"     , ParamSpec(0.0 , 1), default = 1)
 
       val freq  = pFreq // LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
       val width = pW // LinXFade2.ar(pW, inW, pWMix * 2 - 1)
       val sig   = LFPulse.ar(freq, width)
 
-      sig * pAmp
+      sig.linlin(0, 1, pLo, pHi)
+    }
+
+    generator("a~sin") {
+      import synth._; import ugen._
+      val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
+      // val pAmp    = pAudio("amp"      , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+      val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
+      val pHi     = pAudio("hi"     , ParamSpec(0.0 , 1), default = 1)
+
+      val freq  = pFreq // LinXFade2.ar(pFreq, inFreq, pFreqMix * 2 - 1)
+      val sig   = SinOsc.ar(freq)
+
+      sig.linlin(-1, 1, pLo, pHi)
+    }
+
+    generator("a~dust") {
+      import synth._; import ugen._
+      val pFreq   = pAudio("freq" , ParamSpec(0.01, 1000, ExpWarp), default = 0.1 /* 1 */)
+      val pDecay  = pAudio("decay", ParamSpec(0.001 , 10, ExpWarp), default = 0.1 /* 1 */)
+      val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
+      val pHi     = pAudio("hi"     , ParamSpec(0.0 , 1), default = 1)
+
+      val freq  = pFreq
+      val sig   = Decay.ar(Dust.ar(freq), pDecay).clip(0.01, 1).linlin(0.01, 1, pLo, pHi)
+      sig
+    }
+
+    generator("a~gray") {
+      import synth._; import ugen._
+      val pLo     = pAudio("lo"     , ParamSpec(0.0 , 1), default = 0)
+      val pHi     = pAudio("hi"     , ParamSpec(0.0 , 1), default = 1)
+      GrayNoise.ar.linlin(-1, 1, pLo, pHi)
     }
 
     generator("a~rand") {
@@ -212,11 +246,12 @@ class Anemone extends Wolkenpumpe[InMemory] {
       mix(in, flt, pMix)
     }
 */
-    sCfg.lineInputs.find(_.name == "beat").foreach { cfg =>
+    sCfg.lineInputs.find(_.name == "i-mkv" /* "beat" */).foreach { cfg =>
       generator("a~beat") {
         import synth._; import ugen._
         val off     = cfg.offset
-        val in      = (PhysicalIn.ar(off) - 0.1) > 0
+        val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
+        val in      = Trig1.ar(PhysicalIn.ar(off) - pThresh, 0.02)
         val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
         val pulse   = PulseDivider.ar(in, pDiv)
         val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
@@ -245,6 +280,26 @@ class Anemone extends Wolkenpumpe[InMemory] {
 
       val sig     = ToggleFF.ar(inTrig).linlin(0, 1, pLo, pHi)
       sig
+    }
+
+    generator("a~step") {
+      import synth._; import ugen._
+      val pLo     = pAudio("lo"    , ParamSpec(0.0, 1.0), default = 0.0)
+      val pHi     = pAudio("hi"    , ParamSpec(0.0, 1.0), default = 1.0)
+      val pDiv    = pAudio("div"   , ParamSpec(1, 16, step = 1), default = 1)
+      // val inTrig  = pAudioIn("trig", 1, ParamSpec(0.0, 1.0))
+      val inTrig  = pAudio("trig", ParamSpec(0.0, 1.0), default = 0)
+      val reset   = pAudio("reset", ParamSpec(0.0, 1.0), default = 0)
+      val sig     = Stepper.ar(inTrig, reset = reset, lo = 0, hi = pDiv).linlin(0, pDiv, pLo, pHi)
+      sig
+    }
+
+    filter("mul") { in =>
+      import synth._; import ugen._
+      val inB   = pAudio("mod", ParamSpec(0.0, 1.0), default = 0)
+      val flt   = in * inB
+      val pMix  = mkMix()
+      mix(in, flt, pMix)
     }
 
     filter("L-lpf") { in =>

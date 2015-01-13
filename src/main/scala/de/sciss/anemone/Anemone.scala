@@ -88,7 +88,23 @@ object Anemone {
     device = if (Desktop.isMac) Some("MOTU 828mk2") else None
   )
 
-  val config: Config = Bremen
+  val ScarlettTest = Config(
+    masterChannels    = 2 to 5,
+    soloChannels      = 0 to 1,
+    generatorChannels = 2,
+    micInputs         = Vector(
+      NamedBusConfig("m-at" , 0, 2),
+      NamedBusConfig("m-dpa", 2, 1)
+    ),
+    lineInputs        = Vector.empty,
+    lineOutputs       = Vector(
+      NamedBusConfig("sum1", 6, 2)
+      // NamedBusConfig("sum2", 8, 2)
+    ),
+    device = if (Desktop.isMac) Some("MOTU 828mk2") else None
+  )
+
+  val config: Config = ScarlettTest // Bremen
 
   def main(args: Array[String]): Unit = {
     implicit val system = InMemory()

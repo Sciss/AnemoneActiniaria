@@ -2,7 +2,7 @@
  *  Anemone.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2015 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -88,23 +88,25 @@ object Anemone {
     device = if (Desktop.isMac) Some("MOTU 828mk2") else None
   )
 
-  val ScarlettTest = Config(
-    masterChannels    = 2 to 5,
-    soloChannels      = 0 to 1,
-    generatorChannels = 2,
+  val Scarlett = Config(
+    masterChannels    = 0 to 5,
+    soloChannels      = 8 to 9,
+    generatorChannels = 3,
     micInputs         = Vector(
       NamedBusConfig("m-at" , 0, 2),
       NamedBusConfig("m-dpa", 2, 1)
     ),
-    lineInputs        = Vector.empty,
-    lineOutputs       = Vector(
-      NamedBusConfig("sum1", 6, 2)
-      // NamedBusConfig("sum2", 8, 2)
+    lineInputs      = Vector(
+      NamedBusConfig("beat" , 3, 1),
+      NamedBusConfig("pirro", 4, 1)
     ),
-    device = if (Desktop.isMac) Some("MOTU 828mk2") else None
+    lineOutputs     = Vector(
+      NamedBusConfig("sum", 6, 2)
+    ),
+    device = None
   )
 
-  val config: Config = ScarlettTest // Bremen
+  val config: Config = Scarlett // Bremen
 
   def main(args: Array[String]): Unit = {
     implicit val system = InMemory()
@@ -150,13 +152,13 @@ class Anemone extends Wolkenpumpe[InMemory] {
     Lag.ar(Seq(f1, f1 * 0.667 + f2 * 0.333, f1 * 0.333, f2 * 0.667, f2))
   }
 
-  private def mkTransition(name: String)(fun: (GE, GE) => GE)(implicit tx: S#Tx, nuages: Nuages[S]) = filter(name) { in =>
-    import de.sciss.synth._
-    import de.sciss.synth.ugen._
-    val fade   = mkMix()
-    val sig   = fun(in, 1 - fade)
-    sig // mix(in, sig, fade)
-  }
+  //  private def mkTransition(name: String)(fun: (GE, GE) => GE)(implicit tx: S#Tx, nuages: Nuages[S]) = filter(name) { in =>
+  //    import de.sciss.synth._
+  //    import de.sciss.synth.ugen._
+  //    val fade   = mkMix()
+  //    val sig   = fun(in, 1 - fade)
+  //    sig // mix(in, sig, fade)
+  //  }
 
   // a 10% direct fade-in/out, possibly with delay to compensate for FFT
   private def mkBlend(pred: GE, z: GE, fade: GE, dt: GE = Constant(0)): GE = {
@@ -262,7 +264,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
       mix(in, flt, pMix)
     }
 */
-    sCfg.lineInputs.find(_.name == "i-mkv" /* "beat" */).foreach { cfg =>
+    sCfg.lineInputs.find(c => c.name == "i-mkv" || c.name == "beat").foreach { cfg =>
       generator("a~beat") {
         import synth._; import ugen._
         val off     = cfg.offset
@@ -274,6 +276,27 @@ class Anemone extends Wolkenpumpe[InMemory] {
         val sig     = DelayN.ar(pulse, 1.0, pTime)
         sig
       }
+    }
+
+    generator("a~step8") {
+      import synth._; import ugen._
+      val vals    = Vector.tabulate(8)(i => pAudio(s"v${i+1}", ParamSpec(0, 1), default = 0))
+      val trig    = pAudio("trig", ParamSpec(0.0, 1.0), default = 0)
+      val hi      = pAudio("hi", ParamSpec(1, 8, step = 1), default = 1)
+      val index   = Stepper.ar(trig, lo = 0, hi = hi - 1)
+      val sig     = Select.ar(index, vals)
+      sig
+    }
+
+    filter("a~dup") { in =>
+      import synth._; import ugen._
+      val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
+      val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
+      val tr      = in - pThresh
+      val tim     = Timer.ar(tr)
+      val frq     = tim.reciprocal * pDiv
+      val sig     = Phasor.ar(in, frq / SampleRate.ir)
+      sig
     }
 
     filter("a~skew") { in =>
@@ -369,7 +392,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
     }
 
     filter("mul") { in =>
-      import synth._; import ugen._
+      import synth._ // ; import ugen._
       val inB   = pAudio("mod", ParamSpec(0.0, 1.0), default = 0)
       val flt   = in * inB
       val pMix  = mkMix()

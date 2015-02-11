@@ -21,3 +21,6 @@ libraryDependencies ++= Seq(
 
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture")
 
+jarName in assembly := s"${name.value}.jar"
+
+target in assembly := baseDirectory.value

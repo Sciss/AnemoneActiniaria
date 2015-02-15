@@ -106,7 +106,25 @@ object Anemone {
     device = None
   )
 
-  val config: Config = Scarlett // Bremen
+  val Impuls = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 8 to 9,
+    generatorChannels = 3,
+    micInputs         = Vector(
+      // NamedBusConfig("m-at" , 0, 2),
+      NamedBusConfig("m-dpa", 0, 2)
+    ),
+    lineInputs      = Vector(
+      // NamedBusConfig("beat" , 3, 1),
+      // NamedBusConfig("pirro", 4, 1)
+    ),
+    lineOutputs     = Vector(
+      NamedBusConfig("sum", 6, 2)
+    ),
+    device = None
+  )
+
+  val config: Config = Impuls
 
   def main(args: Array[String]): Unit = {
     implicit val system = InMemory()
@@ -270,7 +288,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
         val off     = cfg.offset
         val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
         val in      = Trig1.ar(PhysicalIn.ar(off) - pThresh, 0.02)
-        val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
+        val pDiv    = pAudio("div", ParamSpec(1, 16, IntWarp), default = 1)
         val pulse   = PulseDivider.ar(in, pDiv)
         val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
         val sig     = DelayN.ar(pulse, 1.0, pTime)
@@ -282,7 +300,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
       import synth._; import ugen._
       val vals    = Vector.tabulate(8)(i => pAudio(s"v${i+1}", ParamSpec(0, 1), default = 0))
       val trig    = pAudio("trig", ParamSpec(0.0, 1.0), default = 0)
-      val hi      = pAudio("hi", ParamSpec(1, 8, step = 1), default = 1)
+      val hi      = pAudio("hi", ParamSpec(1, 8, IntWarp), default = 1)
       val index   = Stepper.ar(trig, lo = 0, hi = hi - 1)
       val sig     = Select.ar(index, vals)
       sig
@@ -291,7 +309,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
     filter("a~dup") { in =>
       import synth._; import ugen._
       val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
-      val pDiv    = pAudio("div", ParamSpec(1, 16, step = 1), default = 1)
+      val pDiv    = pAudio("div", ParamSpec(1, 16, IntWarp), default = 1)
       val tr      = in - pThresh
       val tim     = Timer.ar(tr)
       val frq     = tim.reciprocal * pDiv
@@ -315,7 +333,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
       import synth._; import ugen._
       val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default = 0.1)
       val pGate   = pAudio("gate", ParamSpec(0.0, 1.0), default = 0) > pThresh
-      val pLeak   = pAudio("leak", ParamSpec(0.0, 1.0, step = 1), default = 0) > pThresh
+      val pLeak   = pAudio("leak", ParamSpec(0, 1, IntWarp), default = 0) > pThresh
       val pMix    = mkMix()
       val sig0    = Gate.ar(in, pGate)
       val leak    = LeakDC.ar(sig0)
@@ -383,7 +401,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
       import synth._; import ugen._
       val pLo     = pAudio("lo"    , ParamSpec(0.0, 1.0), default = 0.0)
       val pHi     = pAudio("hi"    , ParamSpec(0.0, 1.0), default = 1.0)
-      val pDiv    = pAudio("div"   , ParamSpec(1, 16, step = 1), default = 1)
+      val pDiv    = pAudio("div"   , ParamSpec(1, 16, IntWarp), default = 1)
       // val inTrig  = pAudioIn("trig", 1, ParamSpec(0.0, 1.0))
       val inTrig  = pAudio("trig", ParamSpec(0.0, 1.0), default = 0)
       val reset   = pAudio("reset", ParamSpec(0.0, 1.0), default = 0)

@@ -112,7 +112,7 @@ object Anemone {
     generatorChannels = 3,
     micInputs         = Vector(
       // NamedBusConfig("m-at" , 0, 2),
-      NamedBusConfig("m-dpa", 0, 2)
+      NamedBusConfig("m-dpa", 10, 2)
     ),
     lineInputs      = Vector(
       // NamedBusConfig("beat" , 3, 1),

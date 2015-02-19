@@ -107,19 +107,21 @@ object Anemone {
   )
 
   val Impuls = Config(
-    masterChannels    = 0 to 3,
-    soloChannels      = 8 to 9,
-    generatorChannels = 3,
+    masterChannels    = 0 to 1,
+    soloChannels      = 6 to 7,
+    generatorChannels = 0, // 2,
     micInputs         = Vector(
       // NamedBusConfig("m-at" , 0, 2),
-      NamedBusConfig("m-dpa", 10, 2)
+      NamedBusConfig("m-dpa" , 10, 1),
+      NamedBusConfig("m-hole",  0, 1),
+      NamedBusConfig("m-keys",  1, 1)
     ),
     lineInputs      = Vector(
       // NamedBusConfig("beat" , 3, 1),
       // NamedBusConfig("pirro", 4, 1)
     ),
     lineOutputs     = Vector(
-      NamedBusConfig("sum", 6, 2)
+      NamedBusConfig("sum", 4, 2)
     ),
     device = None
   )
@@ -135,7 +137,7 @@ object Anemone {
 class Anemone extends Wolkenpumpe[InMemory] {
   import Anemone._
   type S = InMemory
-  private val dsl = new Wolkenpumpe.DSL[S]
+  private val dsl = new DSL[S]
   import dsl._
 
   override protected def configure(sCfg: ScissProcs.ConfigBuilder, nCfg: Nuages.ConfigBuilder,
@@ -293,6 +295,31 @@ class Anemone extends Wolkenpumpe[InMemory] {
         val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default = 0)
         val sig     = DelayN.ar(pulse, 1.0, pTime)
         sig
+      }
+    }
+
+    sCfg.micInputs.find(c => c.name == "m-hole").foreach { cfg =>
+      generator("m-feat") {
+        import synth._; import ugen._
+        val off         = cfg.offset
+        val in0         = PhysicalIn.ar(off)
+        val gain        = pAudio("gain", ParamSpec(-20, 20), default = 0).dbamp
+        val in          = in0 * gain
+        val pThresh     = pControl("thresh", ParamSpec(0, 1), default = 0.5)
+        val buf         = LocalBuf(numFrames = 1024, numChannels = 1)
+        val chain1      = FFT(buf, in)
+        val onsets      = Onsets.kr(chain1, pThresh)
+        val loud        = Loudness.kr(chain1)
+        val cent        = SpecCentroid.kr(chain1)
+        val flat        = SpecFlatness.kr(chain1)
+        val loudN       = (loud / 64).clip(0, 1)
+        val centN       = cent.clip(100, 10000).explin(100, 10000, 0, 1)
+        val flatN       = flat.clip(0, 1)
+
+        pAudioOut("loud", loudN)
+        pAudioOut("cent", centN)
+        pAudioOut("flat", flatN)
+        onsets
       }
     }
 

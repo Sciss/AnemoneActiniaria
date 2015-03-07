@@ -93,12 +93,11 @@ object Anemone {
     soloChannels      = 8 to 9,
     generatorChannels = 3,
     micInputs         = Vector(
-      NamedBusConfig("m-at" , 0, 2),
-      NamedBusConfig("m-dpa", 2, 1)
+      NamedBusConfig("m-dpa", 10, 2)
     ),
     lineInputs      = Vector(
-      NamedBusConfig("beat" , 3, 1),
-      NamedBusConfig("pirro", 4, 1)
+      NamedBusConfig("pirro", 0, 1),
+      NamedBusConfig("beat" , 1, 1)
     ),
     lineOutputs     = Vector(
       NamedBusConfig("sum", 6, 2)
@@ -126,7 +125,7 @@ object Anemone {
     device = None
   )
 
-  val config: Config = Impuls
+  val config: Config = Scarlett
 
   def main(args: Array[String]): Unit = {
     implicit val system = InMemory()

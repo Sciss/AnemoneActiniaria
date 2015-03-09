@@ -225,6 +225,30 @@ class Anemone extends Wolkenpumpe[InMemory] {
       sig.linlin(-1, 1, pLo, pHi)
     }
 
+    val masterChansOption = nCfg.masterChannels
+
+    generator("muta-quietsch") {
+      import synth._; import ugen._
+      val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, ExpWarp), default = 0.014)
+      val v14a  = 6286.0566 // pAudio("p2"     , ParamSpec(10, 10000, ExpWarp), default = 6286.0566)
+      val v24   = pAudio("p3"    , ParamSpec(-0.0005, -5.0, ExpWarp), default = -1.699198)
+      val amp   = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
+      val det   = pAudio("detune" , ParamSpec(1, 2), default = 1)
+
+      val numOut  = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
+
+      val v14: GE = Vec.tabulate(numOut) { ch =>
+        val m = (ch: GE).linlin(0, (numOut - 1).max(1), 1, det)
+        v14a * m
+      }
+      val v25   = Ringz.ar(v11, v24, v24)
+      val v26   = 1.0
+      val v27   = v26 trunc v25
+      val v28   = v27 | v14
+      val sig   = v28
+      Limiter.ar(LeakDC.ar(sig), dur = 0.01) * amp
+    }
+
     generator("a~dust") {
       import synth._; import ugen._
       val pFreq   = pAudio("freq" , ParamSpec(0.01, 1000, ExpWarp), default = 0.1 /* 1 */)

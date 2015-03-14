@@ -197,6 +197,8 @@ class Anemone extends Wolkenpumpe[InMemory] {
                                            nuages: Nuages[S], aural: AuralSystem): Unit = {
     super.registerProcesses(sCfg, nCfg)
 
+    Mutagens(dsl, sCfg, nCfg)
+
     generator("a~pulse") {
       import synth._; import ugen._
       val pFreq   = pAudio("freq"     , ParamSpec(0.1 , 10000, ExpWarp), default = 15 /* 1 */)
@@ -223,30 +225,6 @@ class Anemone extends Wolkenpumpe[InMemory] {
       val sig   = SinOsc.ar(freq)
 
       sig.linlin(-1, 1, pLo, pHi)
-    }
-
-    val masterChansOption = nCfg.masterChannels
-
-    generator("muta-quietsch") {
-      import synth._; import ugen._
-      val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, ExpWarp), default = 0.014)
-      val v14a  = 6286.0566 // pAudio("p2"     , ParamSpec(10, 10000, ExpWarp), default = 6286.0566)
-      val v24   = pAudio("p3"    , ParamSpec(-0.0005, -5.0, ExpWarp), default = -1.699198)
-      val amp   = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default =  0.1)
-      val det   = pAudio("detune" , ParamSpec(1, 2), default = 1)
-
-      val numOut  = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
-
-      val v14: GE = Vec.tabulate(numOut) { ch =>
-        val m = (ch: GE).linlin(0, (numOut - 1).max(1), 1, det)
-        v14a * m
-      }
-      val v25   = Ringz.ar(v11, v24, v24)
-      val v26   = 1.0
-      val v27   = v26 trunc v25
-      val v28   = v27 | v14
-      val sig   = v28
-      Limiter.ar(LeakDC.ar(sig), dur = 0.01) * amp
     }
 
     generator("a~dust") {
@@ -459,6 +437,14 @@ class Anemone extends Wolkenpumpe[InMemory] {
       sig
     }
 
+    filter("norm") { in =>
+      import synth._; import ugen._
+      val amp   = pAudio("amp", ParamSpec(-40.0, -3.0, LinWarp), default = -40).dbamp
+      val flt   = Normalizer.ar(in, level = amp, dur = 0.25)
+      val pMix  = mkMix()
+      mix(in, flt, pMix)
+    }
+
     filter("mul") { in =>
       import synth._ // ; import ugen._
       val inB   = pAudio("mod", ParamSpec(0.0, 1.0), default = 0)
@@ -553,69 +539,5 @@ class Anemone extends Wolkenpumpe[InMemory] {
 
       mkBlend(in, wet, fade)
     }
-
-    /*
-    collector("vbap") { in =>
-      import synth._; import ugen._
-      def calcIndices(xf: GE, yf: GE): ((GE, GE, GE), (GE, GE, GE), (GE, GE, GE)) = {
-        val x   = xf.floor
-        val u   = xf - x
-        val y0  = yf.floor
-        val v   = yf - y0
-
-        // note, we add two to avoid problems with negative numbers,
-        // but have to take care to subtract that later
-        val y   = {
-          val cond1 = (y0 % 2) sig_!= (x % 2)
-          val cond2 = u + v < 1
-          val cond3 = u - v > 0
-          val cond  = (cond1 & cond2) | cond3
-          y0 + 2 - cond  // if (cond) y0 + 1 else y0 + 2
-        }
-
-        val yDiv  = (y / 2).floor - 1 // the minus 1 corrects the offset
-        val yOdd  = y % 2
-        val yEven = 1 - yOdd
-        val xOdd  = x % 2
-
-        val vx1  = x + yOdd
-        val vy1i = yDiv + yOdd
-        val vy1  = vy1i * 2 + (vx1 % 2)
-
-        val vx2  = x + (yOdd ^ xOdd)
-        val vy2i = yDiv + yEven
-        val vy2  = vy2i * 2 + (vx2 % 2)
-
-        val vx3  = x + yEven
-        val vy3i = yDiv + yOdd
-        val vy3  = vy3i * 2 + (vx3 % 2)
-
-        // cf. https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-        def dist(x: GE, y: GE)(lx1: GE, ly1: GE, lx2: GE, ly2: GE): GE = {
-          // |Dy x0 - Dx y0 - x1 y2 + x2 y1| / sqrt(Dx.squared + Dy.squared)
-          // - we assume a normalized Dx, Dy, and thus drop the division
-          // - indeed we know the height is two and divide by it
-
-          val dx = lx2 - lx1
-          val dy = ly2 - ly1
-          //  (dy * x - dx * y - lx1 * ly2 + lx2 * ly1).abs / 2
-          Sum4(dy * x, -dx * y, -lx1 * ly2, lx2 * ly1).abs / 2
-        }
-
-        val df = dist(xf, yf) _
-        val d1 = df(vx2, vy2, vx3, vy3)
-        val d2 = df(vx3, vy3, vx1, vy1)
-        val d3 = df(vx1, vy1, vx2, vy2)
-        // println(f"d1 = $d1%1.2f, d2 = $d2%1.2f, d3 = $d3%1.2f, sum = ${d1 + d2 + d3}%1.2f")
-        val g1 = d1.sqrt
-        val g2 = d2.sqrt
-        val g3 = d3.sqrt
-
-        ((vx1, vy1i, g1), (vx2, vy2i, g2), (vx3, vy3i, g3))
-      }
-
-      ...
-    }
-    */
   }
 }

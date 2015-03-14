@@ -8,9 +8,9 @@ scalaVersion       := "2.11.6"
 
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 
-homepage           := Some(url("https://github.com/Sciss/" + name.value))
+homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion   = "1.2.0-SNAPSHOT"
+lazy val wolkenpumpeVersion   = "1.2.0"
 
 lazy val webLaFVersion        = "1.28"
 

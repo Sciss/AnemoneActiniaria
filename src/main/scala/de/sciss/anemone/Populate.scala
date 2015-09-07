@@ -6,8 +6,8 @@ import java.util.{Date, Locale}
 
 import de.sciss.file._
 import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
-import de.sciss.lucre.synth.Sys
 import de.sciss.lucre.stm
+import de.sciss.lucre.synth.Sys
 import de.sciss.nuages.{DbFaderWarp, ExpWarp, IntWarp, NamedBusConfig, Nuages, ParamSpec, ScissProcs, TrigSpec}
 import de.sciss.synth.GE
 import de.sciss.synth.io.AudioFile
@@ -770,16 +770,14 @@ object Populate {
     }
 
     filter("pow") { in =>
-      val pAmt = pAudio("amt", ParamSpec(0, 1), default = 0.5)
-      val pMix = mkMix()
-
-      val amt   = pAmt
-      val amtM  = 1 - amt
-      val exp   = amtM * 0.5 + 0.5
-      val flt0  = in.abs.pow(exp) * in.signum
-      val amp0  = Amplitude.ar(flt0)
-      val amp   = amtM + (amp0 * amt)
-      val flt   = flt0 * amp
+      val exp   = pAudio("amt"  , ParamSpec(0.5, 2.0, ExpWarp), default = 1.0)
+      val decay = pAudio("decay", ParamSpec(0.5, 2.0, ExpWarp), default = 1.0)
+      val peak0 = PeakFollower.ar(in, decay)
+      val peak  = peak0.max(-20.dbamp)
+      val pMix  = mkMix()
+      val inN   = in / peak
+      val pow   = inN.pow(exp)
+      val flt   = pow * peak
       mix(in, flt, pMix)
     }
 
@@ -1214,7 +1212,7 @@ object Populate {
     filter("L-lpf") { in =>
       val fade  = mkMix4()
       val freq  = fade.linexp(1, 0, 22.05 * 2, 20000) // 22050
-    val wet   = LPF.ar(in, freq)
+      val wet   = LPF.ar(in, freq)
       mkBlend(in, wet, fade)
     }
 
@@ -1246,13 +1244,13 @@ object Populate {
     filter("L-up") { in =>
       val fade    = mkMix4()
       val numSteps = 16 // 10
-    val x        = (1 - fade) * numSteps
+      val x        = (1 - fade) * numSteps
       val xh       = x / 2
       val a        = (xh + 0.5).floor        * 2
       val b0       = (xh       .floor + 0.5) * 2
       val b        = b0.min(numSteps)
       val ny       = 20000 // 22050
-    val zero     = 22.05
+      val zero     = 22.05
       val aFreq    = a.linexp(numSteps, 0, zero, ny) - zero
       val bFreq    = b.linexp(numSteps, 0, zero, ny) - zero
       val freq: GE = Seq(aFreq, bFreq)
@@ -1261,8 +1259,8 @@ object Populate {
 
       val zig     = x.fold(0, 1)
       val az      = zig     // .sqrt
-    val bz      = 1 - zig // .sqrt
-    val wet     = az * (z0 \ 1 /* aka ceil */) + bz * (z0 \ 0 /* aka floor */)
+      val bz      = 1 - zig // .sqrt
+      val wet     = az * (z0 \ 1 /* aka ceil */) + bz * (z0 \ 0 /* aka floor */)
 
       mkBlend(in, wet, fade)
     }
@@ -1277,7 +1275,7 @@ object Populate {
       val b        = b0.min(numSteps)
       val fd: GE   = Seq(a, b)
       val ny       = 20000 // 20000 // 22050
-    val zero     = 22.05
+      val zero     = 22.05
       val freq1    = fd.linexp(0, numSteps, ny, zero)
       // val freq2    = fd.linexp(0, numSteps, zero, ny) - zero
 
@@ -1286,10 +1284,33 @@ object Populate {
 
       val zig = x.fold(0, 1)
       val az  = zig      // .sqrt
-    val bz  = 1 - zig  // .sqrt
-    val wet = az * (z0 \ 1 /* aka ceil */) + bz * (z0 \ 0 /* aka floor */)
+      val bz  = 1 - zig  // .sqrt
+      val wet = az * (z0 \ 1 /* aka ceil */) + bz * (z0 \ 0 /* aka floor */)
 
       mkBlend(in, wet, fade)
+    }
+
+    filter("env-perc") { in =>
+//      def perc(attack: GE = 0.01, release: GE = 1, level: GE = 1,
+//               curve: Env.Curve = parametric(-4)): V =
+//        create(0, Vector[Seg]((attack, level, curve), (release, 0, curve)))
+//
+//      def asr(attack: GE = 0.01f, level: GE = 1, release: GE = 1, curve: Curve = parametric(-4)): Env =
+//        new Env(0, Vector[Segment]((attack, level, curve), (release, 0, curve)), 1)
+
+      val attack  = pAudio("atk", ParamSpec(0.001,  1.0, ExpWarp), default = 0.01)
+      val release = pAudio("rls", ParamSpec(0.001, 10.0, ExpWarp), default = 0.01)
+      val curveP   = pAudio("curve", ParamSpec(-4, 4), default = 0)
+      val level   = pControl("amp" , ParamSpec(0.01,  1.0, ExpWarp),  default = 1)
+      val thresh  = pControl("thresh", ParamSpec(0, 1), default = 0.5)
+
+      val trig    = in > thresh
+      val curve   = Env.Curve(Curve.parametric.id, curveP)
+
+      val env = Env.perc(attack = attack, release = release, level = level, curve = curve)
+      val gen = EnvGen.ar(env, gate = trig)
+
+      gen // mkBlend(in, wet, fade)
     }
   }
 }

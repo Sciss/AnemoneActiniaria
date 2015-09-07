@@ -14,12 +14,12 @@
 package de.sciss.anemone
 
 import com.alee.laf.WebLookAndFeel
-import de.sciss.desktop.Desktop
 import de.sciss.file._
 import de.sciss.lucre.stm
 import de.sciss.lucre.swing.defer
 import de.sciss.lucre.synth.InMemory
-import de.sciss.nuages.{Nuages, ScissProcs, Wolkenpumpe, NamedBusConfig}
+import de.sciss.nuages
+import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
 import de.sciss.synth.Server
 import de.sciss.synth.proc.AuralSystem
 
@@ -34,97 +34,27 @@ object Anemone {
                     device: Option[String] = None
   )
 
-  val FirefaceConfig = Config(
-    masterChannels  = 0 until 6,
-    soloChannels    = 6 until 8,
-    micInputs       = Vector(
-      NamedBusConfig("m-dpa", 0, 1)
-    ),
-    lineInputs      = Vector(
-      NamedBusConfig("pirro", 4, 1),
-      NamedBusConfig("beat" , 5, 1)
-    ),
-    lineOutputs     = Vector(
-      NamedBusConfig("sum", 5, 1)
-    )
-  )
-
-  val MOTUConfig = Config(
-    masterChannels  = 2 to 6,
-    soloChannels    = 0 to 1,
-    micInputs       = Vector(
-      NamedBusConfig("m-at" , 14, 2),
-      NamedBusConfig("m-dpa", 16, 1)
-    ),
-    lineInputs      = Vector(
-      NamedBusConfig("beat" , 18, 1),
-      NamedBusConfig("pirro", 19, 1)
-    ),
-    lineOutputs     = Vector(
-      NamedBusConfig("sum", 8, 2)
-    ),
-    device = if (Desktop.isMac) Some("MOTU 828mk2") else None
-  )
-
-  val Bremen = Config(
-    masterChannels    = 2 to 5,
-    soloChannels      = 0 to 1,
-    generatorChannels = 2,
-    micInputs         = Vector(
-      NamedBusConfig("m-at" , 14, 2),
-      NamedBusConfig("m-dpa", 16, 1)
-    ),
-    lineInputs        = Vector(
-      NamedBusConfig("i-lh" , 18, 2),
-      NamedBusConfig("i-mkv", 20, 2)
-    ),
-    lineOutputs       = Vector(
-      NamedBusConfig("sum1", 6, 2)
-      // NamedBusConfig("sum2", 8, 2)
-    ),
-    device = if (Desktop.isMac) Some("MOTU 828mk2") else None
-  )
-
   val Scarlett = Config(
-    masterChannels    = 0 to 5,
-    soloChannels      = 8 to 9,
-    generatorChannels = 3,
+    masterChannels    =  0 to 15,
+    soloChannels      = 16 to 17,
+    generatorChannels = 4,
     micInputs         = Vector(
-      NamedBusConfig("m-dpa", 10, 2)
+      NamedBusConfig("m-dpa", 0, 2)
     ),
     lineInputs      = Vector(
-      NamedBusConfig("pirro", 0, 1),
-      NamedBusConfig("beat" , 1, 1)
+      NamedBusConfig("pirro", 5, 1),
+      NamedBusConfig("beat" , 4, 1)
     ),
     lineOutputs     = Vector(
-      NamedBusConfig("sum", 6, 2)
+      // NamedBusConfig("sum", 6, 2)
     ),
-    device = None
-  )
-
-  val Impuls = Config(
-    masterChannels    = 0 to 1,
-    soloChannels      = 6 to 7,
-    generatorChannels = 0, // 2,
-    micInputs         = Vector(
-      // NamedBusConfig("m-at" , 0, 2),
-      NamedBusConfig("m-dpa" , 10, 1),
-      NamedBusConfig("m-hole",  0, 1),
-      NamedBusConfig("m-keys",  1, 1)
-    ),
-    lineInputs      = Vector(
-      // NamedBusConfig("beat" , 3, 1),
-      // NamedBusConfig("pirro", 4, 1)
-    ),
-    lineOutputs     = Vector(
-      NamedBusConfig("sum", 4, 2)
-    ),
-    device = None
+    device = Some("Wolkenpumpe-16")
   )
 
   val config: Config = Scarlett
 
   def main(args: Array[String]): Unit = {
+    nuages.showLog = false
     implicit val system = InMemory()
     defer(WebLookAndFeel.install())
     (new Anemone).run()
@@ -143,7 +73,7 @@ class Anemone extends Wolkenpumpe[InMemory] {
     sCfg.lineInputs         = config.lineInputs
     sCfg.lineOutputs        = config.lineOutputs
     // sCfg.highPass           = 100
-    sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
+    sCfg.audioFilesFolder   = None // Some(userHome / "Music" / "tapes")
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)

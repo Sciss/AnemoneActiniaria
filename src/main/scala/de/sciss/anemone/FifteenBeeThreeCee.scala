@@ -757,5 +757,26 @@ object FifteenBeeThreeCee {
       val sig = pan2
       Limiter.ar(LeakDC.ar(sig)) * _amp
     }
+
+    generator("anem-mbz-90-385") {
+      import synth._
+      import ugen._
+      val _amp    = pAudio("amp"   , ParamSpec( 0.01,     1   , ExpWarp), default =   0.1  )
+      val f0      = pAudio("freq"  , ParamSpec( 1.0 , 1000.0  , ExpWarp), default =  56.57 )
+      val beat    = pAudio("beat"  , ParamSpec( 0.01,   10.0  , ExpWarp), default =   1.2  )
+      val w0      = pAudio("width1", ParamSpec( 0.001,   0.999, ExpWarp), default =   0.093)
+      val w1      = pAudio("width2", ParamSpec( 0.001,   0.999, ExpWarp), default =   0.028)
+      val t0      = pAudio("thresh", ParamSpec(-0.2,    +0.2           ), default =  -0.016)
+
+      val f1   = f0 * 2 + beat // "freq2".kr(115.54486 /)
+
+      val pulse_1         = Pulse.ar(freq = f0, width = w0)
+      val geq_0           = pulse_1 >= t0
+      val pulse_2         = Pulse.ar(freq = f1, width = w1)
+      val clip2           = f1 clip2 pulse_2
+      val mix             = geq_0 + clip2
+      val pan2            = Pan2.ar(mix, pos = 0.0, level = 1.0)
+      LeakDC.ar(pan2) * _amp
+    }
   }
 }

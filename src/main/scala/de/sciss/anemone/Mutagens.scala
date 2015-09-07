@@ -13,10 +13,10 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.event.Sys
+import de.sciss.lucre.stm.Sys
+import de.sciss.nuages.{ExpWarp, IntWarp, LinWarp, Nuages, ParamSpec, ScissProcs}
 import de.sciss.synth.GE
-import de.sciss.{synth, nuages}
-import de.sciss.nuages.{Nuages, ScissProcs, ParamSpec, ExpWarp, LinWarp, IntWarp}
+import de.sciss.{nuages, synth}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -28,7 +28,8 @@ object Mutagens {
     val masterChansOption = nCfg.masterChannels
 
     generator("muta-quietsch") {
-      import synth._; import ugen._
+      import synth._
+      import ugen._
       val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, ExpWarp), default = 0.014)
       val v14a  = 6286.0566 // pAudio("p2"     , ParamSpec(10, 10000, ExpWarp), default = 6286.0566)
       val v24   = pAudio("p3"    , ParamSpec(-0.0005, -5.0, ExpWarp), default = -1.699198)
@@ -61,7 +62,8 @@ object Mutagens {
     }
 
     generator("muta-boing") {  // c5f81c53
-      import synth._; import ugen._
+      import synth._
+      import ugen._
       val v0a   = pAudio("p1"     , ParamSpec(  0.0015,    0.15  , ExpWarp), default =    0.014171208)
       val v1    = pAudio("p2"     , ParamSpec( 12     , 2586.9963, ExpWarp), default = 2586.9963     )
       val v2    = 42.465885
@@ -87,7 +89,8 @@ object Mutagens {
     }
 
     generator("muta-wicket") {  // 7c89d6f8
-      import synth._; import ugen._
+      import synth._
+      import ugen._
       val v1a   = pAudio("p1"   , ParamSpec( 2   , 1000  , ExpWarp), default =  42.465885  )
       val amp   = pAudio("amp"  , ParamSpec( 0.01,    1  , ExpWarp), default =   0.1       )
       val v2    = pAudio("rhy"  , ParamSpec( 1   , 1000  , ExpWarp), default =   1.0962135 )
@@ -105,7 +108,8 @@ object Mutagens {
     }
 
     generator("muta-gas") { // ca0e2d3f
-      import synth._; import ugen._
+      import synth._
+      import ugen._
       val v0  = pAudio("p1"  , ParamSpec( 20, 10000  , ExpWarp), default = 2043.3861)
       val v1  = pAudio("p2"  , ParamSpec( 4, 400  , ExpWarp), default = 40.62856)
       val v2  = pAudio("p3"  , ParamSpec( 60, 10000, ExpWarp), default = 6911.0312)
@@ -134,7 +138,8 @@ object Mutagens {
     }
 
     generator("muta-towtow") {
-      import synth._; import ugen._
+      import synth._
+      import ugen._
       val amp = pAudio("amp" , ParamSpec( 0.01,    1  , ExpWarp), default =   0.1       )
       val v4  = pAudio("p1"  , ParamSpec( -2000, 2000, LinWarp), default = -415.97122)
       val v10 = pAudio("p2"  , ParamSpec( 0.1, 4000  , ExpWarp), default =   40.62856)

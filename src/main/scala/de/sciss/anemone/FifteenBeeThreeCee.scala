@@ -3,6 +3,7 @@ package de.sciss.anemone
 
 import de.sciss.lucre.stm.Sys
 import de.sciss.nuages.{ParamSpec, Nuages, ScissProcs, ExpWarp}
+import de.sciss.synth.proc.graph.Attribute
 import de.sciss.{synth, nuages}
 
 object FifteenBeeThreeCee {
@@ -13,10 +14,16 @@ object FifteenBeeThreeCee {
     val masterChansOption = nCfg.masterChannels
     val numChannels = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
 
+    def default(in: Double): Attribute.Default =
+      if (sCfg.generatorChannels <= 0)
+        Attribute.Scalar(in)
+      else
+        Attribute.Vector(Vector.fill(sCfg.generatorChannels)(in))
+
     generator("anem-is-20-162") {
       import synth._
       import ugen._
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default =  0.1)
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
 
       // RandSeed.ir(trig = 1, seed = 56789.0)
       val yi              = LFDNoise3.ar(1551.5026 !! numChannels)
@@ -104,7 +111,7 @@ object FifteenBeeThreeCee {
     generator("anem-tt-55-dn") {
       import synth._
       import ugen._
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default =  0.1)
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
 
       // RandSeed.ir(trig = 1, seed = 56789.0)
       val in_0            = LeakDC.ar(0.0 !! numChannels, coeff = 0.995)
@@ -143,7 +150,7 @@ object FifteenBeeThreeCee {
       val iphase_1        = max_12 min 1.0
 
       // val p4 = "p4".kr(Vector.fill(16)(12.434091))
-      val p4 = pAudio("p1", ParamSpec(1, 1000, ExpWarp), default = 12.434091)
+      val p4 = pAudio("p1", ParamSpec(1, 1000, ExpWarp), default(12.434091))
 
       val varSaw_1        = VarSaw.ar(freq = p4, iphase = iphase_1, width = 0.28425974)
       val roundUpTo       = varSaw_0 roundUpTo varSaw_1
@@ -163,13 +170,13 @@ object FifteenBeeThreeCee {
     generator("anem-tt-55-dn") {
       import synth._
       import ugen._
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default =  0.1)
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
 
       // RandSeed.ir(trig = 1, seed = 56789.0)
       val b_0             = SyncSaw.ar(syncFreq = 872.9059 !! numChannels, sawFreq = 0.07972072)
 
       // val p1 = "p1".kr(440.0)
-      val p1   = pAudio("freq", ParamSpec(1.0, 2000, ExpWarp), default = 440)
+      val p1   = pAudio("freq", ParamSpec(1.0, 2000, ExpWarp), default(440))
 
       val lFPulse_0       = LFPulse.ar(freq = p1 !! numChannels, iphase = 1.0, width = 1.0)
       val lFPar_0         = LFPar.ar(freq = 0.01 !! numChannels, iphase = 0.0)
@@ -398,7 +405,7 @@ object FifteenBeeThreeCee {
     generator("anem-io-10-282") {
       import synth._
       import ugen._
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default =  0.1)
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
 
       // RandSeed.ir(trig = 1, seed = 56789.0)
       val in_0            = LeakDC.ar(0.015426122 !! numChannels, coeff = 0.995)
@@ -582,7 +589,7 @@ object FifteenBeeThreeCee {
     generator("anem-io-10-423") {
       import synth._
       import ugen._
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default =  0.1)
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
 
       // RandSeed.ir(trig = 1, seed = 56789.0)
       val syncSaw_0       = SyncSaw.ar(syncFreq = 0.01 !! numChannels, sawFreq = 0.01)
@@ -717,7 +724,7 @@ object FifteenBeeThreeCee {
     generator("anem-io-10-88") {
       import synth._
       import ugen._
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default =  0.1)
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
 
       val lFPar_0         = LFPar.ar(freq = 0.01 !! numChannels, iphase = 0.0)
       val clip2_0         = lFPar_0 clip2 0.7677357
@@ -761,12 +768,12 @@ object FifteenBeeThreeCee {
     generator("anem-mbz-90-385") {
       import synth._
       import ugen._
-      val _amp    = pAudio("amp"   , ParamSpec( 0.01,     1   , ExpWarp), default =   0.1  )
-      val f0      = pAudio("freq"  , ParamSpec( 1.0 , 1000.0  , ExpWarp), default =  56.57 )
-      val beat    = pAudio("beat"  , ParamSpec( 0.01,   10.0  , ExpWarp), default =   1.2  )
-      val w0      = pAudio("width1", ParamSpec( 0.001,   0.999, ExpWarp), default =   0.093)
-      val w1      = pAudio("width2", ParamSpec( 0.001,   0.999, ExpWarp), default =   0.028)
-      val t0      = pAudio("thresh", ParamSpec(-0.2,    +0.2           ), default =  -0.016)
+      val _amp    = pAudio("amp"   , ParamSpec( 0.01,     1   , ExpWarp), default(   0.1  ))
+      val f0      = pAudio("freq"  , ParamSpec( 1.0 , 1000.0  , ExpWarp), default(  56.57 ))
+      val beat    = pAudio("beat"  , ParamSpec( 0.01,   10.0  , ExpWarp), default(   1.2  ))
+      val w0      = pAudio("width1", ParamSpec( 0.001,   0.999, ExpWarp), default(   0.093))
+      val w1      = pAudio("width2", ParamSpec( 0.001,   0.999, ExpWarp), default(   0.028))
+      val t0      = pAudio("thresh", ParamSpec(-0.2,    +0.2           ), default(  -0.016))
 
       val f1   = f0 * 2 + beat // "freq2".kr(115.54486 /)
 

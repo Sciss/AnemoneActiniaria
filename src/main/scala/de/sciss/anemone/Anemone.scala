@@ -19,6 +19,7 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.swing.defer
 import de.sciss.lucre.synth.InMemory
 import de.sciss.nuages
+import de.sciss.nuages.ScissProcs.NuagesFinder
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
 import de.sciss.synth.Server
 import de.sciss.synth.proc.AuralSystem
@@ -86,11 +87,11 @@ class Anemone extends Wolkenpumpe[InMemory] {
     if (config.device.isDefined) aCfg.deviceName = config.device
   }
 
-  override protected def registerProcesses(sCfg: ScissProcs.Config, nCfg: Nuages.Config)
-                                          (implicit tx: S#Tx, cursor: stm.Cursor[InMemory],
-                                           nuages: Nuages[S], aural: AuralSystem): Unit = {
-    // super.registerProcesses(sCfg, nCfg)
-    Populate.registerActions[S]()
+  override protected def registerProcesses(sCfg: ScissProcs.Config, nCfg: Nuages.Config, nuagesFinder: NuagesFinder)
+                                          (implicit tx: S#Tx, cursor: stm.Cursor[S], nuages: Nuages[S],
+                                           aural: AuralSystem): Unit = {
+    super.registerProcesses(sCfg, nCfg, nuagesFinder)
+    // Populate.registerActions[S]()
     Populate.apply(nuages, nCfg, sCfg)
   }
 }

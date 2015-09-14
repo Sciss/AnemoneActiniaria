@@ -25,7 +25,7 @@ object Populate {
       case _ => None
     }
 
-  def apply[S <: Sys[S]](n: Nuages[S], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
+  def apply[S <: stm.Sys[S]](n: Nuages[S], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
                         (implicit tx: S#Tx, cursor: stm.Cursor[S]): Unit = {
     implicit val _n = n
     val dsl = new nuages.DSL[S]

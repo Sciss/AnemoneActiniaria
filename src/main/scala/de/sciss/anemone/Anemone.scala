@@ -13,26 +13,36 @@
 
 package de.sciss.anemone
 
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 import com.alee.laf.WebLookAndFeel
 import de.sciss.file._
 import de.sciss.lucre.stm
+import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.swing.defer
-import de.sciss.lucre.synth.InMemory
+import de.sciss.lucre.synth.{Sys, InMemory}
 import de.sciss.nuages
 import de.sciss.nuages.ScissProcs.NuagesFinder
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
 import de.sciss.synth.Server
-import de.sciss.synth.proc.AuralSystem
+import de.sciss.synth.proc.{Durable, AuralSystem}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
 object Anemone {
+  def mkDatabase(parent: File): File = {
+    val recFormat = new SimpleDateFormat("'session_'yyMMdd'_'HHmmss", Locale.US)
+    parent / recFormat.format(new java.util.Date)
+  }
+
   case class Config(masterChannels: Range, soloChannels: Range,
                     micInputs  : Vec[NamedBusConfig],
                     lineInputs : Vec[NamedBusConfig],
                     lineOutputs: Vec[NamedBusConfig],
                     generatorChannels: Int = 0,
-                    device: Option[String] = None
+                    device: Option[String] = None,
+                    database: Option[File] = None
   )
 
   val Scarlett = Config(
@@ -49,21 +59,34 @@ object Anemone {
     lineOutputs     = Vector(
       // NamedBusConfig("sum", 6, 2)
     ),
-    device = Some("Wolkenpumpe-16")
+    device = Some("Wolkenpumpe-16"),
+    database = Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  val config: Config = Scarlett
+  private val config: Config = Scarlett
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false
-    implicit val system = InMemory()
     defer(WebLookAndFeel.install())
-    (new Anemone).run()
+    Wolkenpumpe.init()
+    config.database match {
+      case Some(f) =>
+        type S = Durable
+        implicit val system: S = Durable(BerkeleyDB.factory(f))
+        val anemone = new Anemone[S](config)
+        val nuagesH = system.root { implicit tx => Nuages[S] }
+        anemone.run(nuagesH)
+
+      case None =>
+        type S = InMemory
+        implicit val system: S = InMemory()
+        val anemone = new Anemone[InMemory](config)
+        val nuagesH = system.step { implicit tx => tx.newHandle(Nuages[S]) }
+        anemone.run(nuagesH)
+    }
   }
 }
-class Anemone extends Wolkenpumpe[InMemory] {
-  import Anemone._
-  type S = InMemory
+class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
 
   override protected def configure(sCfg: ScissProcs.ConfigBuilder, nCfg: Nuages.ConfigBuilder,
                                    aCfg: Server.ConfigBuilder): Unit = {

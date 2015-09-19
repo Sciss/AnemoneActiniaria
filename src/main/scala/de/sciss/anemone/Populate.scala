@@ -1,8 +1,19 @@
+/*
+ *  Populate.scala
+ *  (Anemone-Actiniaria)
+ *
+ *  Copyright (c) 2014-2015 Hanns Holger Rutz. All rights reserved.
+ *
+ *  This software is published under the GNU General Public License v3+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.anemone
 
-import de.sciss.file._
 import de.sciss.lucre.stm
-import de.sciss.lucre.synth.Sys
 import de.sciss.nuages.{ExpWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
 import de.sciss.synth.proc.Folder
 import de.sciss.synth.proc.Implicits._
@@ -52,7 +63,7 @@ object Populate {
 
     // --------------- ANEMONE ----------------
 
-    sConfig.lineInputs.find(c => c.name == "i-mkv" || c.name == "beat").foreach { cfg =>
+    (sConfig.micInputs ++ sConfig.lineInputs).find(c => c.name == "i-mkv" || c.name == "beat").foreach { cfg =>
       generator("a~beat") {
         val off     = cfg.offset
         val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default(0.1))
@@ -65,35 +76,35 @@ object Populate {
       }
     }
 
-    def ForceChan(in: GE): GE = if (sConfig.generatorChannels <= 0) in else {
-      ScissProcs.WrapExtendChannels(sConfig.generatorChannels, in)
-    }
+//    def ForceChan(in: GE): GE = if (sConfig.generatorChannels <= 0) in else {
+//      ScissProcs.WrapExtendChannels(sConfig.generatorChannels, in)
+//    }
 
-    sConfig.micInputs.find(c => c.name == "m-hole" || c.name == "pirro").foreach { cfg =>
-      generator("m-feat") {
-        val off         = cfg.offset
-        val in0         = PhysicalIn.ar(off)
-        val gain0       = pAudio("gain", ParamSpec(-20, 20), default(0))
-        val gain        = (Mix.mono(gain0) / NumChannels(gain0)).dbamp
-        val in          = in0 * gain
-        val pThresh0    = pControl("thresh", ParamSpec(0, 1), default(0.5))
-        val pThresh     = Mix.mono(pThresh0) / NumChannels(pThresh0)
-        val buf         = LocalBuf(numFrames = 1024, numChannels = 1)
-        val chain1      = FFT(buf, in)
-        val onsets      = Onsets      .kr(chain1, pThresh)
-        val loud        = Loudness    .kr(chain1)
-        val cent        = SpecCentroid.kr(chain1)
-        val flat        = SpecFlatness.kr(chain1)
-        val loudN       = (loud / 64).clip(0, 1)
-        val centN       = cent.clip(100, 10000).explin(100, 10000, 0, 1)
-        val flatN       = flat.clip(0, 1)
-
-        pAudioOut("loud", ForceChan(loudN))
-        pAudioOut("cent", ForceChan(centN))
-        pAudioOut("flat", ForceChan(flatN))
-        ForceChan(onsets)
-      }
-    }
+//    (sConfig.micInputs ++ sConfig.lineInputs).find(c => c.name == "m-hole" || c.name == "pirro").foreach { cfg =>
+//      generator("m-feat") {
+//        val off         = cfg.offset
+//        val in0         = PhysicalIn.ar(off)
+//        val gain0       = pAudio("gain", ParamSpec(-20, 20), default(0))
+//        val gain        = (Mix.mono(gain0) / NumChannels(gain0)).dbamp
+//        val in          = in0 * gain
+//        val pThresh0    = pControl("thresh", ParamSpec(0, 1), default(0.5))
+//        val pThresh     = Mix.mono(pThresh0) / NumChannels(pThresh0)
+//        val buf         = LocalBuf(numFrames = 1024, numChannels = 1)
+//        val chain1      = FFT(buf, in)
+//        val onsets      = Onsets      .kr(chain1, pThresh)
+//        val loud        = Loudness    .kr(chain1)
+//        val cent        = SpecCentroid.kr(chain1)
+//        val flat        = SpecFlatness.kr(chain1)
+//        val loudN       = (loud / 64).clip(0, 1)
+//        val centN       = cent.clip(100, 10000).explin(100, 10000, 0, 1)
+//        val flatN       = flat.clip(0, 1)
+//
+//        pAudioOut("loud", ForceChan(loudN))
+//        pAudioOut("cent", ForceChan(centN))
+//        pAudioOut("flat", ForceChan(flatN))
+//        ForceChan(onsets)
+//      }
+//    }
 
 //    sConfig.micInputs.find(_.name == "m-dpa").foreach { cfg =>
 //      generator("a~dpa") {

@@ -59,9 +59,16 @@ object Anemone {
     lineOutputs     = Vector(
       // NamedBusConfig("sum", 6, 2)
     ),
-    device = Some("Wolkenpumpe-16"),
-    database = Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
+    device    = Some("Wolkenpumpe-16"),
+    database  = Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
+
+//  val CUBE_Lala = Scarlett.copy(
+//    lineInputs = Vector(
+//      NamedBusConfig("pirro", 9, 1),
+//      NamedBusConfig("beat" , 8, 1)
+//    )
+//  )
 
   private val config: Config = Scarlett
 

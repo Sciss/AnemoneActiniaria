@@ -12,7 +12,7 @@ homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
 lazy val wolkenpumpeVersion   = "2.1.0-SNAPSHOT"
 lazy val webLaFVersion        = "1.28"
-lazy val lucreVersion         = "3.2.0-SNAPSHOT"
+lazy val lucreVersion         = "3.2.0"
 
 libraryDependencies ++= Seq(
   "de.sciss" %% "wolkenpumpe" % wolkenpumpeVersion,

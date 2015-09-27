@@ -13,22 +13,28 @@
 
 package de.sciss.anemone
 
+import java.awt.Color
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 import com.alee.laf.WebLookAndFeel
 import de.sciss.file._
+// import de.sciss.fscape.FScapeJobs
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
+import de.sciss.lucre.stm.{Cursor, Source}
 import de.sciss.lucre.swing.defer
-import de.sciss.lucre.synth.{Sys, InMemory}
-import de.sciss.nuages
+import de.sciss.lucre.synth.{Buffer, Synth, InMemory, Sys}
+import de.sciss.{synth, nuages}
 import de.sciss.nuages.ScissProcs.NuagesFinder
-import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
-import de.sciss.synth.Server
-import de.sciss.synth.proc.{Durable, AuralSystem}
+import de.sciss.nuages.{NuagesView, NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
+import de.sciss.synth.{SynthGraph, Server}
+import de.sciss.synth.proc.{Proc, AuralSystem, Durable}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
+import scala.concurrent.stm.Ref
+import scala.swing.event.MousePressed
+import scala.swing.{Component, Dimension, Graphics2D}
 
 object Anemone {
   def mkDatabase(parent: File): File = {
@@ -129,4 +135,109 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
     // Populate.registerActions[S]()
     Populate.apply(nuages, nCfg, sCfg)
   }
+
+//  override def run(nuagesH: Source[S#Tx, Nuages[S]])(implicit cursor: Cursor[S]): Unit = {
+//    super.run(nuagesH)
+//    config.micInputs.find(_.name == "m-dpa").foreach { micConfig =>
+//      defer {
+//        val tutti = new Tutti(micIn = micConfig.offset)
+//        view.addSouthComponent(tutti)
+//      }
+//    }
+//  }
+
+//  private class Tutti(micIn: Int)
+//    extends Component {
+//
+//    preferredSize = new Dimension(32, 32)
+//    minimumSize   = preferredSize
+//    maximumSize   = preferredSize
+//
+//    override protected def paintComponent(g: Graphics2D): Unit = {
+//      val colr = state.single.get match {
+//        case 0 => Color.blue
+//        case 1 => Color.orange
+//        case _ => Color.black
+//      }
+//      g.setColor(colr)
+//      val w = peer.getWidth
+//      val h = peer.getHeight
+//      val y = (h - 32) >> 1
+//      // println(s"w = $w, h = $h")
+//      g.fillRect(0, y, w, 32)
+//    }
+//
+//    listenTo(mouse.clicks)
+//    reactions += {
+//      case _: MousePressed => toggleState()
+//    }
+//
+//    def toggleState(): Unit = {
+//      state.single.get match {
+//        case 0 => startRecord()
+//        case 1 => cancelRecord()
+//      }
+//      repaint()
+//    }
+//
+//    private val state     = Ref(0)
+//    private val recSynth  = Ref(Option.empty[Synth])
+//
+//    private def cancelRecord(): Unit = {
+//      val p = view.panel
+//      p.cursor.step { implicit tx =>
+//        require(state.swap(0)(tx.peer) == 1)
+//        recSynth.swap(None).foreach(_.dispose())
+//      }
+//    }
+//
+//    private def startRecord(): Unit = {
+//      val p     = view.panel
+//      val path  = File.createTemp(suffix = "aif").path
+//      p.cursor.step { implicit tx =>
+//        require(recSynth.get(tx.peer).isEmpty)
+//        require(state.get(tx.peer) == 0)
+//        // val tl  = p.nuages.timeline
+//        // val pos = p.transport.position
+//        auralSystem.serverOption.foreach { s =>
+//          val gr = SynthGraph {
+//            import synth._
+//            import ugen._
+//            val bufId = "buf".kr
+//            val sig   = PhysicalIn.ar(micIn)
+//            DiskOut.ar(bufId, sig * 12.dbamp)
+//            val dur   = 14 * 60 // less than fifteen minutes
+//            Line.kr(dur = dur, doneAction = freeSelf)
+//          }
+//          val buf = Buffer.diskOut(s)(path = path, numChannels = 1)
+//          val syn = Synth.play(gr, nameHint = Some("tutti"))(
+//            target = s, args = List("buf" -> buf.id), dependencies = buf :: Nil)
+//          syn.onEndTxn { implicit tx =>
+//            if (state.get(tx.peer) == 1) {  // not cancelled
+//
+//            }
+//          }
+//          recSynth.set(Some(syn))(tx.peer)
+//          state.set(1)(tx.peer)
+//        }
+//      }
+//    }
+//
+//    private lazy val fscape = FScapeJobs()
+//
+//    private val workFolder = userHome/"Documents"/"misc"/"Anemone"/"zkm_rec"
+//
+//    private def runFScape(inPath: String): Unit = {
+//      import FScapeJobs._
+//      val sliceOut = workFolder / "slice.aif"
+//      fscape.connect() { ok =>
+//        val docSlice = Slice(in = inPath, out = sliceOut.path, spec = OutputSpec.aiffFloat, separateFiles = true,
+//          initialSkip = "0s", sliceLength = "1s", skipLength = "0s", finalSkip = "0s",
+//          autoScale = true, autoNum = 16)
+//        val docMerge = FScapeJobs.Channel
+//        fscape.processChain(name = ???, docs = ???, progress = ???)
+//      }
+//    }
+//  }
+//
 }

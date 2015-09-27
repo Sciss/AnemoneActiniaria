@@ -60,17 +60,22 @@ object Anemone {
       // NamedBusConfig("sum", 6, 2)
     ),
     device    = Some("Wolkenpumpe-16"),
-    database  = Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
+    database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-//  val CUBE_Lala = Scarlett.copy(
-//    lineInputs = Vector(
-//      NamedBusConfig("pirro", 9, 1),
-//      NamedBusConfig("beat" , 8, 1)
-//    )
-//  )
+  val Atelier = Scarlett.copy(
+    masterChannels  = 0 to 7,
+    micInputs       = Vector.empty,
+    device          = Some("Wolkenpumpe"),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 0, 4)
+    ),
+    lineOutputs = Vector(
+      NamedBusConfig("sum", 8, 2)
+    )
+  )
 
-  private val config: Config = Scarlett
+  private val config: Config = Scarlett // Atelier
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false

@@ -69,7 +69,7 @@ object Anemone {
     database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  val Atelier = Scarlett.copy(
+  val ZKMAtelier = Scarlett.copy(
     masterChannels  = 0 to 7,
     micInputs       = Vector.empty,
     device          = Some("Wolkenpumpe"),
@@ -81,7 +81,22 @@ object Anemone {
     )
   )
 
-  private val config: Config = Scarlett // Atelier
+  // jack_netsource -H 169.254.1.2 -o 2 -i 18 -N david
+  val GrazAtelier = Scarlett.copy(
+    masterChannels  = 0 to 23,
+    soloChannels    = 26 to 27,
+    micInputs       = Vector.empty,
+    device          = Some("Wolkenpumpe-24"),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 0, 1),
+      NamedBusConfig("beat" , 1, 1)
+    ),
+    lineOutputs = Vector(
+      NamedBusConfig("sum", 24, 2)
+    )
+  )
+
+  private val config: Config = GrazAtelier // Atelier
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false

@@ -1,6 +1,6 @@
 name               := "AnemoneActiniaria"
 
-version            := "0.1.0"
+version            := "0.1.1-SNAPSHOT"
 
 organization       := "de.sciss"
 
@@ -10,9 +10,9 @@ licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.
 
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion   = "2.2.0"
+lazy val wolkenpumpeVersion   = "2.3.0"
 lazy val webLaFVersion        = "1.28"
-lazy val lucreVersion         = "3.2.0"
+lazy val lucreVersion         = "3.2.2"
 // lazy val fscapeJobsVersion    = "1.5.1"
 
 libraryDependencies ++= Seq(

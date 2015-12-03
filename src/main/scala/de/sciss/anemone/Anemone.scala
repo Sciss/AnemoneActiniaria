@@ -96,7 +96,25 @@ object Anemone {
     )
   )
 
-  private val config: Config = GrazAtelier // Atelier
+  val Forum = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 4 to 5,
+    generatorChannels = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa", 0, 2)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 5, 1),
+      NamedBusConfig("beat" , 4, 1)
+    ),
+    lineOutputs     = Vector(
+      NamedBusConfig("sum", 6, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
+  )
+
+  private val config: Config = Forum
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false

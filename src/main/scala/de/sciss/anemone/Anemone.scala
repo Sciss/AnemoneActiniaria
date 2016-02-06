@@ -13,28 +13,24 @@
 
 package de.sciss.anemone
 
-import java.awt.Color
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 import com.alee.laf.WebLookAndFeel
 import de.sciss.file._
-// import de.sciss.fscape.FScapeJobs
+import de.sciss.nuages.Nuages.Surface
+
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.lucre.stm.{Cursor, Source}
 import de.sciss.lucre.swing.defer
-import de.sciss.lucre.synth.{Buffer, Synth, InMemory, Sys}
-import de.sciss.{synth, nuages}
+import de.sciss.lucre.synth.{InMemory, Sys}
+import de.sciss.nuages
 import de.sciss.nuages.ScissProcs.NuagesFinder
-import de.sciss.nuages.{NuagesView, NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
-import de.sciss.synth.{SynthGraph, Server}
-import de.sciss.synth.proc.{Proc, AuralSystem, Durable}
+import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
+import de.sciss.synth.Server
+import de.sciss.synth.proc.{AuralSystem, Durable, Folder, Timeline}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
-import scala.concurrent.stm.Ref
-import scala.swing.event.MousePressed
-import scala.swing.{Component, Dimension, Graphics2D}
 
 object Anemone {
   def mkDatabase(parent: File): File = {
@@ -48,7 +44,8 @@ object Anemone {
                     lineOutputs: Vec[NamedBusConfig],
                     generatorChannels: Int = 0,
                     device: Option[String] = None,
-                    database: Option[File] = None
+                    database: Option[File] = None,
+                    timeline: Boolean = true
   )
 
   val Scarlett = Config(
@@ -114,7 +111,34 @@ object Anemone {
     database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  private val config: Config = Forum
+  val Feierabend = Config(
+    masterChannels    = 0 to 1,
+    soloChannels      = 2 to 3,
+    generatorChannels = 2,
+    micInputs         = Vector(
+//      NamedBusConfig("m-dpa", 0, 2)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 0, 1),
+      NamedBusConfig("beat" , 1, 1)
+    ),
+    lineOutputs     = Vector(
+//      NamedBusConfig("sum", 6, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
+  )
+
+  private val config: Config = Feierabend
+
+  def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
+    if (config.timeline) {
+      val tl = Timeline[S]
+      Surface.Timeline(tl)
+    } else {
+      val f = Folder[S]
+      Surface.Folder(f)
+    }
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false
@@ -125,14 +149,19 @@ object Anemone {
         type S = Durable
         implicit val system: S = Durable(BerkeleyDB.factory(f))
         val anemone = new Anemone[S](config)
-        val nuagesH = system.root { implicit tx => Nuages[S] }
+        val nuagesH = system.root { implicit tx =>
+          Nuages[S](mkSurface(config))
+        }
         anemone.run(nuagesH)
 
       case None =>
         type S = InMemory
         implicit val system: S = InMemory()
         val anemone = new Anemone[InMemory](config)
-        val nuagesH = system.step { implicit tx => tx.newHandle(Nuages[S]) }
+        val nuagesH = system.step { implicit tx =>
+          val n = Nuages[S](mkSurface(config))
+          tx.newHandle(n)
+        }
         anemone.run(nuagesH)
     }
   }

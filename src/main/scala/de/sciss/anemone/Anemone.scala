@@ -2,7 +2,7 @@
  *  Anemone.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2015 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2016 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -16,13 +16,12 @@ package de.sciss.anemone
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-import com.alee.laf.WebLookAndFeel
 import de.sciss.file._
 import de.sciss.nuages.Nuages.Surface
+import de.sciss.submin.Submin
 
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.lucre.swing.defer
 import de.sciss.lucre.synth.{InMemory, Sys}
 import de.sciss.nuages
 import de.sciss.nuages.ScissProcs.NuagesFinder
@@ -142,7 +141,8 @@ object Anemone {
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false
-    defer(WebLookAndFeel.install())
+    // defer(WebLookAndFeel.install())
+    Submin.install(true)
     Wolkenpumpe.init()
     config.database match {
       case Some(f) =>

@@ -14,6 +14,8 @@ lazy val wolkenpumpeVersion   = "2.5.0"
 lazy val subminVersion        = "0.2.0"
 lazy val lucreVersion         = "3.3.1"
 
+resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
+
 libraryDependencies ++= Seq(
   "de.sciss" %% "wolkenpumpe" % wolkenpumpeVersion,
   "de.sciss" %  "submin"      % subminVersion,

@@ -110,16 +110,16 @@ object Anemone {
     database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  val Feierabend = Config(
-    masterChannels    = 0 to 1,
-    soloChannels      = 2 to 3,
-    generatorChannels = 2,
+  val Minuten = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 4 to 5,
+    generatorChannels = 4,
     micInputs         = Vector(
-//      NamedBusConfig("m-dpa", 0, 2)
+      NamedBusConfig("m-dpa", 0, 2)
     ),
     lineInputs      = Vector(
-      NamedBusConfig("pirro", 0, 1),
-      NamedBusConfig("beat" , 1, 1)
+      NamedBusConfig("pirro", 4, 2),
+      NamedBusConfig("beat" , 6, 1)
     ),
     lineOutputs     = Vector(
 //      NamedBusConfig("sum", 6, 2)
@@ -128,7 +128,7 @@ object Anemone {
     database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
   )
 
-  private val config: Config = Feierabend
+  private val config: Config = Minuten
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

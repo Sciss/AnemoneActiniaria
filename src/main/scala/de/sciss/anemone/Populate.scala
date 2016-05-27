@@ -65,6 +65,7 @@ object Populate {
 
     (sConfig.micInputs ++ sConfig.lineInputs).find(c => c.name == "i-mkv" || c.name == "beat").foreach { cfg =>
       generator("a~beat") {
+        shortcut = "B"
         val off     = cfg.offset
         val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default(0.1))
         val in      = Trig1.ar(PhysicalIn.ar(off) - pThresh, 0.02)

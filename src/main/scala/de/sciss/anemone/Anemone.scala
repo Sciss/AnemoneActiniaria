@@ -79,17 +79,21 @@ object Anemone {
 
   // jack_netsource -H 169.254.1.2 -o 2 -i 18 -N david
   val GrazAtelier = Scarlett.copy(
-    masterChannels  = 0 to 23,
-    soloChannels    = 26 to 27,
-    micInputs       = Vector.empty,
-    device          = Some("Wolkenpumpe-24"),
-    lineInputs      = Vector(
-      NamedBusConfig("pirro", 0, 1),
-      NamedBusConfig("beat" , 1, 1)
+    masterChannels  = 0 to 3,
+    soloChannels    = 4 to 5,
+    generatorChannels = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa", 0, 2)
     ),
-    lineOutputs = Vector(
-      NamedBusConfig("sum", 24, 2)
-    )
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 4, 2),
+      NamedBusConfig("beat" , 6, 1)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 6, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = Some(mkDatabase(userHome/"Music"/"renibday"/"sessions"))
   )
 
   val Forum = Config(
@@ -128,7 +132,7 @@ object Anemone {
     database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
   )
 
-  private val config: Config = Minuten
+  private val config: Config = GrazAtelier
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {
@@ -177,7 +181,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
     sCfg.lineInputs         = config.lineInputs
     sCfg.lineOutputs        = config.lineOutputs
     // sCfg.highPass           = 100
-    sCfg.audioFilesFolder   = None // Some(userHome / "Music" / "tapes")
+    sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)

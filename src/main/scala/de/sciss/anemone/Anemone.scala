@@ -132,7 +132,7 @@ object Anemone {
     database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
   )
 
-  private val config: Config = GrazAtelier
+  private val config: Config = Minuten // GrazAtelier
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

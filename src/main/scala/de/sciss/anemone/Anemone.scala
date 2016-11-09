@@ -114,7 +114,7 @@ object Anemone {
     database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  val Minuten = Config(
+  val Minoriten = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
     generatorChannels = 4,
@@ -129,10 +129,10 @@ object Anemone {
 //      NamedBusConfig("sum", 6, 2)
     ),
     device    = Some("Wolkenpumpe"),
-    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
+    database  = None // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
   )
 
-  private val config: Config = Minuten // GrazAtelier
+  private val config: Config = Minoriten // GrazAtelier
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

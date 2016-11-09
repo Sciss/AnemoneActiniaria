@@ -1,13 +1,14 @@
 name               := "AnemoneActiniaria"
-version            := "0.2.0"
+version            := "0.3.0-SNAPSHOT"
 organization       := "de.sciss"
 scalaVersion       := "2.11.8"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion   = "2.7.0"
-lazy val subminVersion        = "0.2.1"
-lazy val lucreVersion         = "3.3.1"
+lazy val wolkenpumpeVersion    = "2.11.0"
+lazy val soundProcessseVersion = "3.9.1"
+lazy val subminVersion         = "0.2.1"
+lazy val lucreVersion          = "3.3.1"
 
 resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
 

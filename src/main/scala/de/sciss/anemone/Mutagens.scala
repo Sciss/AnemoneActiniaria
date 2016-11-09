@@ -16,7 +16,7 @@ package de.sciss.anemone
 import de.sciss.lucre.stm.Sys
 import de.sciss.nuages.{ExpWarp, IntWarp, LinWarp, Nuages, ParamSpec, ScissProcs}
 import de.sciss.synth.GE
-import de.sciss.synth.proc.graph.Attribute
+import de.sciss.synth.ugen.ControlValues
 import de.sciss.{nuages, synth}
 
 object Mutagens {
@@ -39,11 +39,11 @@ object Mutagens {
       in * det
     }
 
-    def default(in: Double): Attribute.Default =
+    def default(in: Double): ControlValues =
       if (sCfg.generatorChannels <= 0)
-        Attribute.Scalar(in)
+        in
       else
-        Attribute.Vector(Vector.fill(sCfg.generatorChannels)(in))
+        Vector.fill(sCfg.generatorChannels)(in)
 
     generator("muta-quietsch") {
       import synth._

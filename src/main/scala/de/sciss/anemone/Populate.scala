@@ -17,7 +17,6 @@ import de.sciss.lucre.stm
 import de.sciss.nuages.{ExpWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
 import de.sciss.synth.proc.Folder
 import de.sciss.synth.proc.Implicits._
-import de.sciss.synth.proc.graph.Attribute
 import de.sciss.{nuages, synth}
 
 object Populate {
@@ -48,11 +47,11 @@ object Populate {
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
     // ScissProcs        (sConfig, nConfig, ???)
 
-    def default(in: Double): Attribute.Default =
+    def default(in: Double): ControlValues =
       if (sConfig.generatorChannels <= 0)
-        Attribute.Scalar(in)
+        in
       else
-        Attribute.Vector(Vector.fill(sConfig.generatorChannels)(in))
+        Vector.fill(sConfig.generatorChannels)(in)
 
     // -------------- TALLINN --------------
 

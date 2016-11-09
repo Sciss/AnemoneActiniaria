@@ -14,9 +14,9 @@
 package de.sciss.anemone
 
 import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{ParamSpec, Nuages, ScissProcs, ExpWarp}
-import de.sciss.synth.proc.graph.Attribute
-import de.sciss.{synth, nuages}
+import de.sciss.nuages.{ExpWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.synth.ugen.ControlValues
+import de.sciss.{nuages, synth}
 
 object FifteenBeeThreeCee {
   def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
@@ -26,11 +26,11 @@ object FifteenBeeThreeCee {
     val masterChansOption = nCfg.masterChannels
     val numChannels = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
 
-    def default(in: Double): Attribute.Default =
+    def default(in: Double): ControlValues =
       if (sCfg.generatorChannels <= 0)
-        Attribute.Scalar(in)
+        in
       else
-        Attribute.Vector(Vector.fill(sCfg.generatorChannels)(in))
+        Vector.fill(sCfg.generatorChannels)(in)
 
     generator("anem-is-20-162") {
       import synth._

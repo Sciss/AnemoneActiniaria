@@ -129,7 +129,8 @@ object Anemone {
 //      NamedBusConfig("sum", 6, 2)
     ),
     device    = Some("Wolkenpumpe"),
-    database  = None // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
+    timeline  = false
   )
 
   private val config: Config = Minoriten // GrazAtelier

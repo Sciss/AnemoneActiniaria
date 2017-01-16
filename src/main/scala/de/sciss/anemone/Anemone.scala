@@ -126,14 +126,34 @@ object Anemone {
       NamedBusConfig("beat" , 6, 1)
     ),
     lineOutputs     = Vector(
-//      NamedBusConfig("sum", 6, 2)
+      //      NamedBusConfig("sum", 6, 2)
     ),
     device    = Some("Wolkenpumpe"),
     database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions"))
     timeline  = false
   )
 
-  private val config: Config = Minoriten // GrazAtelier
+  val Imperfect = Config(
+    masterChannels    = 0 until 24,
+    soloChannels      = 24 to 25,
+    generatorChannels = 2, // 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-in" , 0, 2),
+      NamedBusConfig("m-out", 4, 2)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 6, 2)
+//      NamedBusConfig("beat" , 6, 1)
+    ),
+    lineOutputs     = Vector(
+//      NamedBusConfig("sum", 6, 2)
+    ),
+    device    = Some("Negatum"),
+    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = Imperfect
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

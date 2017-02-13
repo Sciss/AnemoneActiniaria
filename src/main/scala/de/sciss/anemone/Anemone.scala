@@ -153,7 +153,26 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = Imperfect
+  val Impuls = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 4 to 5,
+    generatorChannels = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa", 0, 2)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 4, 2),
+      NamedBusConfig("beat" , 6, 1)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = Impuls
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

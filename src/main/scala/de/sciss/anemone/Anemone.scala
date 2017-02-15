@@ -65,7 +65,7 @@ object Anemone {
     database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  val ZKMAtelier = Scarlett.copy(
+  val ZKMAtelier: Config = Scarlett.copy(
     masterChannels  = 0 to 7,
     micInputs       = Vector.empty,
     device          = Some("Wolkenpumpe"),
@@ -78,7 +78,7 @@ object Anemone {
   )
 
   // jack_netsource -H 169.254.1.2 -o 2 -i 18 -N david
-  val GrazAtelier = Scarlett.copy(
+  val GrazAtelier: Config = Scarlett.copy(
     masterChannels  = 0 to 3,
     soloChannels    = 4 to 5,
     generatorChannels = 4,
@@ -349,7 +349,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
 
   override def run(nuagesH: stm.Source[S#Tx, Nuages[S]])(implicit cursor: stm.Cursor[S]): Unit = {
     super.run(nuagesH)
-    if (config.device == Some("Finissage")) cursor.step { implicit tx =>
+    if (config.device.contains("Finissage")) cursor.step { implicit tx =>
       auralSystem.addClient(new AuralSystem.Client {
         override def auralStarted(s: Server)(implicit tx: Txn): Unit = {
           val g = SynthGraph {

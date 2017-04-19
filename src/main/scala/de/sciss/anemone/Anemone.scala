@@ -37,14 +37,17 @@ object Anemone {
     parent / recFormat.format(new java.util.Date)
   }
 
-  case class Config(masterChannels: Range, soloChannels: Range,
-                    micInputs  : Vec[NamedBusConfig],
-                    lineInputs : Vec[NamedBusConfig],
-                    lineOutputs: Vec[NamedBusConfig],
-                    generatorChannels: Int = 0,
-                    device: Option[String] = None,
-                    database: Option[File] = None,
-                    timeline: Boolean = true
+  final case class Config(
+                          masterChannels    : Range,
+                          masterGroups      : Vec[NamedBusConfig] = Vector.empty,
+                          soloChannels      : Range,
+                          micInputs         : Vec[NamedBusConfig],
+                          lineInputs        : Vec[NamedBusConfig],
+                          lineOutputs       : Vec[NamedBusConfig],
+                          generatorChannels : Int                 = 0,
+                          device            : Option[String]      = None,
+                          database          : Option[File]        = None,
+                          timeline          : Boolean             = true
   )
 
   val Scarlett = Config(
@@ -172,7 +175,34 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = Impuls
+  val NoSolo: Range = 0 until 0
+
+  val BEAST = Config(
+    masterChannels    = 0 until 12,
+    masterGroups      = Vector(
+      NamedBusConfig("B", 0, 4),
+      NamedBusConfig("M", 4, 4),
+      NamedBusConfig("T", 8, 4)
+    ),
+    soloChannels      = NoSolo, // 12 to 13,
+    generatorChannels = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa", 0, 2)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 2, 2),
+      NamedBusConfig("beat" , 4, 1)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+//    database  = None, // Some(mkDatabase(file("/") / "data" / "projects"/"Anemone"/"sessions")),
+    database  = Some(mkDatabase(userHome / "Documents" /"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = BEAST
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {
@@ -220,12 +250,13 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
     sCfg.micInputs          = config.micInputs
     sCfg.lineInputs         = config.lineInputs
     sCfg.lineOutputs        = config.lineOutputs
+    sCfg.masterGroups       = config.masterGroups
     // sCfg.highPass           = 100
     sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)
-    nCfg.soloChannels       = Some(config.soloChannels)
+    nCfg.soloChannels       = if (config.soloChannels.nonEmpty) Some(config.soloChannels) else None
     nCfg.recordPath         = Some((userHome / "Music" / "rec").path) // XXX has no effect?
 
     aCfg.wireBuffers        = 512 // 1024

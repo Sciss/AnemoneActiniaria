@@ -5,10 +5,10 @@ scalaVersion       := "2.11.8"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion    = "2.12.1"
-lazy val soundProcessesVersion = "3.10.2"
+lazy val wolkenpumpeVersion    = "2.13.1-SNAPSHOT"
+lazy val soundProcessesVersion = "3.11.0"
 lazy val subminVersion         = "0.2.1"
-lazy val lucreVersion          = "3.3.2"
+lazy val lucreVersion          = "3.3.3"
 
 resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
 
@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
   "de.sciss" %% "wolkenpumpe"         % wolkenpumpeVersion,
   "de.sciss" %% "soundprocesses-core" % soundProcessesVersion,
   "de.sciss" %  "submin"              % subminVersion,
+  "de.sciss" %% "lucre-core"          % lucreVersion,
   "de.sciss" %% "lucre-bdb"           % lucreVersion
 )
 

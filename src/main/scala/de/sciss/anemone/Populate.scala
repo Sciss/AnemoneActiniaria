@@ -45,8 +45,8 @@ object Populate {
 
     Mutagens          (dsl, sConfig, nConfig)
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
-    Imperfect         (dsl, sConfig, nConfig)
-    // ScissProcs        (sConfig, nConfig, ???)
+//    Imperfect         (dsl, sConfig, nConfig)
+    // ScissProcs        (sConfig, nConfig, ...)
 
     def default(in: Double): ControlValues =
       if (sConfig.generatorChannels <= 0)

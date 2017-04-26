@@ -215,6 +215,7 @@ object Anemone {
 
   def main(args: Array[String]): Unit = {
     nuages.showLog = false
+    // de.sciss.nuages. DSL.useScanFixed = true
     // defer(WebLookAndFeel.install())
     Submin.install(true)
     Wolkenpumpe.init()

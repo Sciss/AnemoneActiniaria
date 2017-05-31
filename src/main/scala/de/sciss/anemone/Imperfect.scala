@@ -29,12 +29,12 @@ object Imperfect {
 
     val numOut = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
 
-    def mkDetune(in: GE, max: Double = 2.0): GE = {
-      require(max > 1)
-      import synth._
-      val det = pAudio("detune" , ParamSpec(1.0, 2.0), default(1.0))
-      in * det
-    }
+//    def mkDetune(in: GE, max: Double = 2.0): GE = {
+//      require(max > 1)
+//      import synth._
+//      val det = pAudio("detune" , ParamSpec(1.0, 2.0), default(1.0))
+//      in * det
+//    }
 
     def default(in: Double): ControlValues =
       if (sCfg.generatorChannels <= 0)
@@ -66,7 +66,7 @@ object Imperfect {
       val masterCfg         = NamedBusConfig("", 0, numChans)
       val masterGroupsCfg   = masterCfg +: sCfg.masterGroups
 
-      masterGroupsCfg.zipWithIndex.foreach { case (cfg, idx) =>
+      masterGroupsCfg.zipWithIndex.foreach { case (cfg, _) =>
 
         def mkDirectOut(sig0: GE): Unit = {
           import synth._
@@ -84,16 +84,16 @@ object Imperfect {
         def collectorF(name: String)(fun: GE => Unit): Proc[S] =
           collector(name, sCfg.generatorChannels)(fun)
 
-        def placeChannels(sig: GE): GE = {
-          import synth._
-          import ugen._
-          if (cfg.numChannels == numChans) sig
-          else {
-            Seq(Silent.ar(cfg.offset),
-              Flatten(sig),
-              Silent.ar(numChans - (cfg.offset + cfg.numChannels))): GE
-          }
-        }
+//        def placeChannels(sig: GE): GE = {
+//          import synth._
+//          import ugen._
+//          if (cfg.numChannels == numChans) sig
+//          else {
+//            Seq(Silent.ar(cfg.offset),
+//              Flatten(sig),
+//              Silent.ar(numChans - (cfg.offset + cfg.numChannels))): GE
+//          }
+//        }
 
         def mkAmp(): GE = {
           import synth._

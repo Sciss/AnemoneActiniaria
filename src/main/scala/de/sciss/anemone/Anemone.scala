@@ -202,7 +202,22 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = BEAST
+  val Cracks = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 4 to 5,
+    generatorChannels = 4,
+    micInputs         = Vector(
+    ),
+    lineInputs      = Vector(
+    ),
+    lineOutputs     = Vector(
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = Cracks
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {
@@ -266,9 +281,9 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
     if (config.device.isDefined) aCfg.deviceName = config.device
   }
 
+
   override protected def registerProcesses(sCfg: ScissProcs.Config, nCfg: Nuages.Config, nuagesFinder: NuagesFinder)
-                                          (implicit tx: S#Tx, cursor: stm.Cursor[S], nuages: Nuages[S],
-                                           aural: AuralSystem): Unit = {
+                                          (implicit tx: S#Tx, nuages: Nuages[S]): Unit = {
     super.registerProcesses(sCfg, nCfg, nuagesFinder)
     // Populate.registerActions[S]()
     Populate.apply(nuages, nCfg, sCfg)

@@ -36,7 +36,7 @@ object Populate {
     }
 
   def apply[S <: stm.Sys[S]](n: Nuages[S], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
-                        (implicit tx: S#Tx, cursor: stm.Cursor[S]): Unit = {
+                        (implicit tx: S#Tx): Unit = {
     implicit val _n = n
     val dsl = nuages.DSL[S]
     import dsl._
@@ -47,6 +47,7 @@ object Populate {
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
 //    Imperfect         (dsl, sConfig, nConfig)
     // ScissProcs        (sConfig, nConfig, ...)
+    Cracks            (dsl, sConfig, nConfig)
 
     def default(in: Double): ControlValues =
       if (sConfig.generatorChannels <= 0)

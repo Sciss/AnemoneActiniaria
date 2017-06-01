@@ -73,17 +73,19 @@ object Cracks {
           x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float) =>
 
         val d = data
-        d(0) = (x1 * width ).toInt
-        d(1) = (y1 * height).toInt
+        val w = raspiWidth
+        val h = raspiHeight
+        d(0) = (x1 * w).toInt
+        d(1) = (y1 * h).toInt
 
-        d(2) = (x2 * width ).toInt
-        d(3) = (y2 * height).toInt
+        d(2) = (x2 * w).toInt
+        d(3) = (y2 * h).toInt
 
-        d(4) = (x3 * width ).toInt
-        d(5) = (y3 * height).toInt
+        d(4) = (x3 * w).toInt
+        d(5) = (y3 * h).toInt
 
-        d(6) = (x4 * width ).toInt
-        d(7) = (y4 * height).toInt
+        d(6) = (x4 * w).toInt
+        d(7) = (y4 * h).toInt
 
         if (DEBUG) println(s"CRACK COORD 1: x1 ${d(0)}, y1 ${d(1)}")
 
@@ -144,6 +146,8 @@ object Cracks {
       ggCombo.maximumSize   = d
       ggCombo.preferredSize = d
 
+      setStage(ch, 0)
+
       Seq(lb, ggCombo)
     }
 
@@ -174,6 +178,9 @@ object Cracks {
 
   final val width : Int = 2820 // 5184
   final val height: Int = 2820 // 2981
+
+  final val raspiWidth : Int = 1024
+  final val raspiHeight: Int = 1024
 
   def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
                         (implicit tx: S#Tx, n: Nuages[S]): Unit = {

@@ -17,16 +17,14 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 import de.sciss.file._
-import de.sciss.nuages.Nuages.Surface
-import de.sciss.submin.Submin
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth._
-import de.sciss.negatum.Speakers
 import de.sciss.nuages
+import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.ScissProcs.NuagesFinder
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe}
-import de.sciss.synth.{SynthGraph, addAfter}
+import de.sciss.submin.Submin
 import de.sciss.synth.proc.{AuralSystem, Durable, Folder, Timeline}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
@@ -204,7 +202,7 @@ object Anemone {
 
   val Cracks = Config(
     masterChannels    = 0 to 3,
-    soloChannels      = 4 to 5,
+    soloChannels      = (4 + 8) to (5 + 8),
     generatorChannels = 4,
     micInputs         = Vector(
     ),
@@ -396,31 +394,33 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
 
   override def run(nuagesH: stm.Source[S#Tx, Nuages[S]])(implicit cursor: stm.Cursor[S]): Unit = {
     super.run(nuagesH)
-    if (config.device.contains("Finissage")) cursor.step { implicit tx =>
+    /* if (config.device.contains("Finissage")) */ cursor.step { implicit tx =>
       auralSystem.addClient(new AuralSystem.Client {
         override def auralStarted(s: Server)(implicit tx: Txn): Unit = {
-          val g = SynthGraph {
-            import de.sciss.synth._
-            import ugen._
-            val numSpk = Speakers.even.size
-            require(config.soloChannels.size == 2 && config.soloChannels.last == config.soloChannels.head + 1)
-            require(config.masterChannels.size == numSpk)
-            val xLo = Speakers.even.map(_.x).min
-            val xHi = Speakers.even.map(_.x).max
-            val stereoOff = config.soloChannels.head
-            var sum = 0.0: GE
-            config.masterChannels.zip(Speakers.even).zipWithIndex.foreach { case ((chanOut, spk), idx) =>
-              val in  = In.ar(chanOut)
-              val pos = spk.x.linlin(xLo, xHi, -1, 1)
-              // println(f"For $chanOut, pos is $pos%g")
-              val sig = Pan2.ar(in, pos)
-              if (idx == 0) sum = sig else sum += sig
-            }
-            val sigOut = (sum / (numSpk * 0.5)).clip2(1)
-            ReplaceOut.ar(stereoOff, sigOut)
-          }
-          Synth.play(g, nameHint = Some("stereo-mix"))(target = s.defaultGroup, addAction = addAfter)
-          tx.afterCommit(println("Launched stereo mix"))
+          Cracks.initOSC(config.masterChannels.max, s)
+
+//          val g = SynthGraph {
+//            import de.sciss.synth._
+//            import ugen._
+//            val numSpk = Speakers.even.size
+//            require(config.soloChannels.size == 2 && config.soloChannels.last == config.soloChannels.head + 1)
+//            require(config.masterChannels.size == numSpk)
+//            val xLo = Speakers.even.map(_.x).min
+//            val xHi = Speakers.even.map(_.x).max
+//            val stereoOff = config.soloChannels.head
+//            var sum = 0.0: GE
+//            config.masterChannels.zip(Speakers.even).zipWithIndex.foreach { case ((chanOut, spk), idx) =>
+//              val in  = In.ar(chanOut)
+//              val pos = spk.x.linlin(xLo, xHi, -1, 1)
+//              // println(f"For $chanOut, pos is $pos%g")
+//              val sig = Pan2.ar(in, pos)
+//              if (idx == 0) sum = sig else sum += sig
+//            }
+//            val sigOut = (sum / (numSpk * 0.5)).clip2(1)
+//            ReplaceOut.ar(stereoOff, sigOut)
+//          }
+//          Synth.play(g, nameHint = Some("stereo-mix"))(target = s.defaultGroup, addAction = addAfter)
+//          tx.afterCommit(println("Launched stereo mix"))
         }
 
         override def auralStopped()(implicit tx: Txn): Unit = ()

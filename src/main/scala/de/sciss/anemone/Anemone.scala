@@ -19,6 +19,7 @@ import java.util.Locale
 import de.sciss.file._
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.store.BerkeleyDB
+import de.sciss.lucre.swing.defer
 import de.sciss.lucre.synth._
 import de.sciss.nuages
 import de.sciss.nuages.Nuages.Surface
@@ -394,6 +395,13 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
 
   override def run(nuagesH: stm.Source[S#Tx, Nuages[S]])(implicit cursor: stm.Cursor[S]): Unit = {
     super.run(nuagesH)
+
+//    deferTx {
+    defer {
+      Cracks.mkComponent(view)
+    }
+//    }
+
     /* if (config.device.contains("Finissage")) */ cursor.step { implicit tx =>
       auralSystem.addClient(new AuralSystem.Client {
         override def auralStarted(s: Server)(implicit tx: Txn): Unit = {

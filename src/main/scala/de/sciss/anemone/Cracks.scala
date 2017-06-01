@@ -17,8 +17,8 @@ import java.net.{InetAddress, InetSocketAddress, SocketAddress}
 
 import de.sciss.file._
 import de.sciss.lucre.stm.Sys
-import de.sciss.lucre.synth.{Node, Server, Synth, Txn}
-import de.sciss.nuages.{DbFaderWarp, ExponentialWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.lucre.synth.{Node, Server, Synth, Txn, Sys => SSys}
+import de.sciss.nuages.{DbFaderWarp, ExponentialWarp, Nuages, NuagesView, ParamSpec, ScissProcs}
 import de.sciss.synth.UGenSource.Vec
 import de.sciss.synth.io.AudioFile
 import de.sciss.synth.proc.AudioCue
@@ -27,6 +27,8 @@ import de.sciss.synth.ugen.ControlValues
 import de.sciss.synth.{SynthGraph, addAfter}
 import de.sciss.{nuages, osc}
 
+import scala.swing.event.SelectionChanged
+import scala.swing.{BoxPanel, ComboBox, Label, Orientation}
 import scala.util.control.NonFatal
 
 object Cracks {
@@ -111,6 +113,47 @@ object Cracks {
     }
   }
 
+  def setStage(chan: Int, stage: Int): Unit = {
+    println(s"setStage($chan, $stage)")
+    try {
+      val sock = raspiSockets(chan)
+      require(stage >= 0 && stage <= 4)
+      val p = osc.Message("/stage", stage)
+      raspiT.send(p, sock)
+    } catch {
+      case NonFatal(ex) =>
+        println(s"Could not set stage of channel $chan to $stage")
+        ex.printStackTrace()
+    }
+  }
+
+  def mkComponent[S <: SSys[S]](view: NuagesView[S]): Unit = {
+    val gadgets = (0 until 4).flatMap { ch =>
+      val lb = new Label(s"${ch+1}:")
+      val ggCombo = new ComboBox(Seq("0 - init", "1 - in", "2 - trace", "3 - remove", "4 - out")) {
+        listenTo(selection)
+        reactions += {
+          case SelectionChanged(_) =>
+            val stage = selection.index
+            setStage(chan = ch, stage = stage)
+        }
+      }
+      val d = ggCombo.preferredSize
+      d.width = math.max(48, d.width)
+      ggCombo.minimumSize   = d
+      ggCombo.maximumSize   = d
+      ggCombo.preferredSize = d
+
+      Seq(lb, ggCombo)
+    }
+
+    val pane = new BoxPanel(Orientation.Horizontal) {
+      contents ++= gadgets
+    }
+
+    view.addSouthComponent(pane)
+  }
+
   def initOSC(busXYOff: Int, s: Server)(implicit tx: Txn): Unit = {
     val g = SynthGraph {
       import de.sciss.synth._
@@ -126,13 +169,8 @@ object Cracks {
 
     tx.afterCommit {
       println("Launched crack router")
-
     }
   }
-
-//  def mkWindow(): Unit = {
-//
-//  }
 
   final val width : Int = 2820 // 5184
   final val height: Int = 2820 // 2981

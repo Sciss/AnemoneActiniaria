@@ -405,7 +405,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends Wolkenpumpe[S] {
     /* if (config.device.contains("Finissage")) */ cursor.step { implicit tx =>
       auralSystem.addClient(new AuralSystem.Client {
         override def auralStarted(s: Server)(implicit tx: Txn): Unit = {
-          Cracks.initOSC(config.masterChannels.max, s)
+          Cracks.initOSC(config.masterChannels.max + 1, s)
 
 //          val g = SynthGraph {
 //            import de.sciss.synth._

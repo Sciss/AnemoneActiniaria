@@ -193,7 +193,7 @@ object Cracks {
         Vector.fill(sCfg.generatorChannels)(in)
 
     for (crackIdx <- 0 until 4) {
-      val busXY = nCfg.masterChannels.get.max + (crackIdx * 2)
+      val busXY = (nCfg.masterChannels.get.max + 1) + (crackIdx * 2)
 
       val pCracks1 = generator(s"cra-${crackIdx + 1}") {
         import de.sciss.synth.proc.graph._

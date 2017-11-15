@@ -2,7 +2,7 @@
  *  Imperfect.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2016 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2017 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -63,7 +63,7 @@ object Imperfect {
 
     masterChansOption.foreach { masterChans =>
       val numChans          = masterChans.size
-      val masterCfg         = NamedBusConfig("", 0, numChans)
+      val masterCfg         = NamedBusConfig("", 0 until numChans)
       val masterGroupsCfg   = masterCfg +: sCfg.masterGroups
 
       masterGroupsCfg.zipWithIndex.foreach { case (cfg, _) =>

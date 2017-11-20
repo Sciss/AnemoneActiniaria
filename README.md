@@ -12,4 +12,4 @@ To contact the author, send an email to `contact at sciss.de`.
 
 ## building
 
-Builds with sbt 0.13 against Scala 2.11.
+Builds with sbt against Scala 2.12.

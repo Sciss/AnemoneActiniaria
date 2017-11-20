@@ -1,5 +1,5 @@
 name               := "AnemoneActiniaria"
-version            := "0.4.0-SNAPSHOT"
+version            := "0.4.0"
 organization       := "de.sciss"
 scalaVersion       := "2.12.4"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))

@@ -16,6 +16,7 @@ package de.sciss.anemone
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+import de.sciss.equal.Implicits._
 import de.sciss.file._
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Cursor
@@ -26,9 +27,13 @@ import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.submin.Submin
 import de.sciss.synth.proc.{Code, Durable, Folder, Timeline}
+import jpen.event.{PenAdapter, PenManagerListener}
+import jpen.owner.multiAwt.AwtPenToolkit
+import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
+import scala.swing.Swing
 
 object Anemone {
   def mkDatabase(parent: File): File = {
@@ -46,7 +51,8 @@ object Anemone {
                           generatorChannels : Int                 = 0,
                           device            : Option[String]      = None,
                           database          : Option[File]        = None,
-                          timeline          : Boolean             = true
+                          timeline          : Boolean             = true,
+                          tablet            : Boolean             = true
   )
 
   lazy val Scarlett = Config(
@@ -307,8 +313,88 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     fut
   }
 
+  def initTablet(): Unit = {
+    val penManager = AwtPenToolkit.getPenManager
+    penManager.addListener(new PenManagerListener {
+      def penDeviceAdded(c: PenProvider.Constructor, d: PenDevice): Unit = {
+        println(s"penDeviceAdded($c, $d)")
+      }
+
+      def penDeviceRemoved(c: PenProvider.Constructor, d: PenDevice): Unit = ()
+    })
+
+    val awtComp = view.panel.display
+    AwtPenToolkit.addPenListener(awtComp, new PenAdapter {
+//      override def penButtonEvent(ev: PButtonEvent): Unit =
+//        println(s"penButtonEvent($ev)")
+
+      @volatile
+      private[this] var lastLevel = 0f
+      private[this] val panel     = view.panel
+      // we take the maximum of these readings, so we don't lose the level when releasing the pen
+      private[this] val levelMax  = new Array[Float](6)
+      private[this] var levelMaxI = 0
+
+      override def penLevelEvent(ev: PLevelEvent): Unit = {
+        //        println(s"penLevelEvent($ev)")
+        val levels = ev.levels
+//        println(s"level: ${levels.mkString("[", ", ", "]")}")
+        var i = 0
+        while (i < levels.length) {
+          val lvl = levels(i)
+
+          // JPen 2.4 -- Tilt information is broken: https://github.com/nicarran/jpen/issues/12
+          if (lvl.getType === PLevel.Type.PRESSURE /* TILT_Y */) {
+            val raw: Float = lvl.value
+            val arr = levelMax
+            arr(levelMaxI) = raw
+            levelMaxI = (levelMaxI + 1) % arr.length
+            var j = 1
+            var max = arr(0)
+            while (j < arr.length) {
+              val k = arr(j)
+              if (k > max) max = k
+              j += 1
+            }
+            val lvlClip = math.min(1.0f, math.max(0f, max - 0.1f) / 0.9f)
+            // println(s"$raw | $max | $lvlClip | $lastLevel | ${panel.acceptGlideTime}")
+            if (lvlClip != lastLevel) {
+              lastLevel = lvlClip
+              if (panel.acceptGlideTime) Swing.onEDT {
+                // println(s"$lastLevel")
+                panel.glideTime = lastLevel
+              }
+            }
+            i = levels.length
+          } else {
+            i += 1
+          }
+        }
+      }
+
+//      override def penKindEvent(ev: PKindEvent): Unit = {
+//        // println(s"penKindEvent($ev)")
+//        println(s"kind: ${ev.kind}")
+//      }
+
+//      override def penScrollEvent(ev: PScrollEvent): Unit =
+//        println(s"penScrollEvent($ev)")
+
+      //      override def penTock(availableMillis: Long): Unit =
+      //        println(s"penTock($availableMillis)")
+    })
+  }
+
   override def run(nuagesH: stm.Source[S#Tx, Nuages[S]])(implicit cursor: stm.Cursor[S]): Unit = {
     super.run(nuagesH)
+
+    if (config.tablet) cursor.step { implicit tx =>
+      auralSystem.whenStarted { _ =>
+        Swing.onEDT {
+          initTablet()
+        }
+      }
+    }
 
 //    defer {
 //      Cracks.mkComponent(view)

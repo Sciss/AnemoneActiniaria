@@ -13,3 +13,8 @@ To contact the author, send an email to `contact at sciss.de`.
 ## building
 
 Builds with sbt against Scala 2.12.
+
+## running
+
+To use the Wacom controls, add environment variable `LD_LIBRARY_PATH=lib` to the JVM run
+(currently only Linux native library included).

@@ -1,12 +1,12 @@
 name               := "AnemoneActiniaria"
-version            := "0.4.0"
+version            := "0.5.0-SNAPSHOT"
 organization       := "de.sciss"
 scalaVersion       := "2.12.4"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion    = "2.19.0"
-lazy val soundProcessesVersion = "3.15.0"
+lazy val wolkenpumpeVersion    = "2.20.0-SNAPSHOT"
+lazy val soundProcessesVersion = "3.16.0-SNAPSHOT"
 lazy val subminVersion         = "0.2.2"
 lazy val lucreVersion          = "3.5.0"
 

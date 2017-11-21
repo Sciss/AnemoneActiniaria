@@ -224,7 +224,7 @@ object Anemone {
 
   lazy val SeaM = Config(
     masterChannels    = 0 to 7,
-    soloChannels      = 8 to 9,
+    soloChannels      = 8 until 8,
     generatorChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
@@ -361,8 +361,10 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
             if (lvlClip != lastLevel) {
               lastLevel = lvlClip
               if (panel.acceptGlideTime) Swing.onEDT {
-                // println(s"$lastLevel")
-                panel.glideTime = lastLevel
+                if (panel.glideTimeSource !== "key") {
+                  panel.glideTime       = lastLevel
+                  panel.glideTimeSource = "tablet"
+                }
               }
             }
             i = levels.length

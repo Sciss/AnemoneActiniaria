@@ -5,7 +5,7 @@ scalaVersion       := "2.12.4"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion    = "2.20.0-SNAPSHOT"
+lazy val wolkenpumpeVersion    = "2.20.0"
 lazy val soundProcessesVersion = "3.16.0"
 lazy val subminVersion         = "0.2.2"
 lazy val lucreVersion          = "3.5.0"
@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "de.sciss" %% "lucre-bdb"           % lucreVersion
 )
 
-scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint")
+scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint:-stars-align,_")
 
 assemblyJarName in assembly := s"${name.value}.jar"
 target          in assembly := baseDirectory.value

@@ -1,6 +1,5 @@
 package de.sciss.anemone
 
-import jpen.demo.JPenDemoControl
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PButtonEvent, PKindEvent, PLevelEvent, PScrollEvent, PenDevice, PenProvider}

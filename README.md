@@ -12,7 +12,8 @@ To contact the author, send an email to `contact at sciss.de`.
 
 ## building
 
-Builds with sbt against Scala 2.12.
+Builds with sbt against Scala 2.12. Use `sbt run`, or `sbt assembly` to create a self-contained jar (you may need the
+latter if you want to add the tablet library to the system's class path).
 
 ## running
 

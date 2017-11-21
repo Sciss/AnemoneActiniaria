@@ -14,7 +14,8 @@
 package de.sciss.anemone
 
 import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{ExpWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.nuages.{DSL, ExpWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.synth.proc.Proc
 import de.sciss.{nuages, synth}
 
 object SeaM {
@@ -46,6 +47,9 @@ object SeaM {
       }
     }
 
+    def filterF(name: String)(fun: GE => GE): Proc[S] =
+      filter   (name, if (DSL.useScanFixed) sCfg.generatorChannels else -1)(fun)
+
     generator("a~noise0") {
       val freq  = pAudio("freq", ParamSpec(0.01, 1000.0, ExpWarp, unit = "Hz"), default(1.0f))
       val lo    = pAudio("lo"  , ParamSpec(0.0, 1.0), default(0.0f))
@@ -70,7 +74,7 @@ object SeaM {
       Slew.ar(range, up = up, down = down)
     }
 
-    filter("squiz") { in =>
+    filterF("squiz") { in =>
       val lowest  = 30.0
       val maxZero = 32
       val maxDur  = 1.0 / lowest * maxZero
@@ -81,14 +85,45 @@ object SeaM {
       mix(in, wet, fade)
     }
 
-    filter("squiz") { in =>
+    filterF("squiz") { in =>
       val lowest  = 30.0
       val maxZero = 32
       val maxDur  = 1.0 / lowest * maxZero
       val pch     = pAudio("shift", ParamSpec(2, 16     , IntWarp), default(2f))
-      val zero    = pAudio("zero" , ParamSpec(1, maxZero /*, IntWarp */), default(1))
+      val zero    = pAudio("zero" , ParamSpec(1, maxZero /*, IntWarp */), default(1)) // too many points, don't use Int
       val fade    = mkMix() // mkMix4()
       val wet     = Squiz.ar(in, pitchRatio = pch, zeroCrossings = zero, maxDur = maxDur)
+      mix(in, wet, fade)
+    }
+
+    filterF("verb2") { in =>
+      val inL     = if (sCfg.generatorChannels <= 0) in \ 0 else {
+        ChannelRangeProxy(in, from = 0, until = sCfg.generatorChannels, step = 2)
+      }
+      val inR     = if (sCfg.generatorChannels <= 0) in \ 1 else {
+        ChannelRangeProxy(in, from = 1, until = sCfg.generatorChannels, step = 2)
+      }
+      val time    = pAudio("time"  , ParamSpec(0.1, 60.0, ExpWarp), default(2f))
+      val size    = pAudio("size"  , ParamSpec(0.5,  5.0, ExpWarp), default(1f))
+      val diff    = pAudio("diff"  , ParamSpec(0,  1), default(0.707f))
+      val damp    = pAudio("damp"  , ParamSpec(0,  1), default(0.1f))
+//      val bright  = pAudio("bright", ParamSpec(0,  1), default(0.5f))
+      val tail    = 1.0f // pAudio("tail" , ParamSpec(-12, 12), default(0f)).dbamp
+//      val mod     = pAudio("mod"   , ParamSpec(0, 50), default(0.1f))
+      val mod     = 0.1f
+      val fade    = mkMix()
+      val low     = tail// 1 - bright
+      val high    = tail // bright
+      val mid     = tail // 0.5
+      val verb    = JPverb.ar(inL = inL, inR = inR, revTime = time, damp = damp, size = size, earlyDiff = diff,
+        modDepth = mod, /* modFreq = ..., */ low = low, mid = mid, high = high)
+      val verbL   = if (sCfg.generatorChannels <= 0) verb \ 0 else {
+        ChannelRangeProxy(verb, from = 0, until = sCfg.generatorChannels, step = 2)
+      }
+      val verbR   = if (sCfg.generatorChannels <= 0) verb \ 1 else {
+        ChannelRangeProxy(verb, from = 1, until = sCfg.generatorChannels, step = 2)
+      }
+      val wet     = Flatten(Zip(verbL, verbR))
       mix(in, wet, fade)
     }
   }

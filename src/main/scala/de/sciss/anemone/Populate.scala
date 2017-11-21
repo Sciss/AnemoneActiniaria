@@ -45,6 +45,7 @@ object Populate {
 
     Mutagens          (dsl, sConfig, nConfig)
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
+    SeaM              (dsl, sConfig, nConfig)
 //    Imperfect         (dsl, sConfig, nConfig)
     // ScissProcs        (sConfig, nConfig, ...)
 //    Cracks            (dsl, sConfig, nConfig)

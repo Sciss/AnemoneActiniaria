@@ -26,13 +26,12 @@ import de.sciss.nuages
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.submin.Submin
-import de.sciss.synth.proc.{Code, Durable, Folder, Timeline}
+import de.sciss.synth.proc.{Durable, Folder, Timeline}
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
-import scala.concurrent.Future
 import scala.swing.Swing
 
 object Anemone {
@@ -306,11 +305,10 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
 
 
   override protected def registerProcesses(nuages: Nuages[S], nCfg: Nuages.Config, sCfg: ScissProcs.Config)
-                                          (implicit tx: S#Tx, cursor: Cursor[S], compiler: Code.Compiler): Future[Unit] = {
-    val fut = super.registerProcesses(nuages, nCfg, sCfg)
+                                          (implicit tx: S#Tx, cursor: Cursor[S]): Unit = {
+    super.registerProcesses(nuages, nCfg, sCfg)
     // Populate.registerActions[S]()
     Populate.apply(nuages, nCfg, sCfg)
-    fut
   }
 
   def initTablet(): Unit = {

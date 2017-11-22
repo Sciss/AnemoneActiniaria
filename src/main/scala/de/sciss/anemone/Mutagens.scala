@@ -14,7 +14,7 @@
 package de.sciss.anemone
 
 import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{ExpWarp, IntWarp, LinWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.nuages.{ExpWarp, IntWarp, LinWarp, Nuages, ParamSpec, ScissProcs, Util}
 import de.sciss.synth.GE
 import de.sciss.synth.ugen.ControlValues
 import de.sciss.{nuages, synth}
@@ -216,7 +216,7 @@ object Mutagens {
       val v61 = 0.0049379473
       val v62 = Trig1.ar(v60, v61)
       val v63a = PanB.ar(v59, v54, v62, v53) // \ 0
-      val v63 = ScissProcs.WrapExtendChannels(numOut, v63a)
+      val v63 = Util.wrapExtendChannels(numOut, v63a)
       val v64 = 233.4438
       val v65 = 0.0049379473
       val v66 = MantissaMask.ar(v65, v64)

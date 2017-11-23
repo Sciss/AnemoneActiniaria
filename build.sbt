@@ -1,5 +1,5 @@
 name               := "AnemoneActiniaria"
-version            := "0.5.0-SNAPSHOT"
+version            := "0.5.0"
 organization       := "de.sciss"
 scalaVersion       := "2.12.4"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
@@ -29,6 +29,8 @@ libraryDependencies ++= Seq(
 
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint:-stars-align,_")
 
+// ---- assembly ----
+
 assemblyJarName in assembly := s"${name.value}.jar"
 target          in assembly := baseDirectory.value
 mainClass       in assembly := Some(mainCl)
@@ -41,3 +43,17 @@ assemblyMergeStrategy in assembly := {
     val old = (assemblyMergeStrategy in assembly).value
     old(x)
 }
+
+// ---- build info ----
+
+enablePlugins(BuildInfoPlugin)
+
+buildInfoPackage := "de.sciss.anemone"
+
+buildInfoKeys := Seq(name, organization, version, scalaVersion, description,
+  BuildInfoKey.map(homepage) { case (k, opt)           => k -> opt.get },
+  BuildInfoKey.map(licenses) { case (_, Seq((lic, _))) => "license" -> lic }
+)
+
+buildInfoOptions += BuildInfoOption.BuildTime
+

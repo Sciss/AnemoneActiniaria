@@ -33,11 +33,26 @@ import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.swing.Swing
+import scala.util.control.NonFatal
 
 object Anemone {
   def mkDatabase(parent: File): File = {
     val recFormat = new SimpleDateFormat("'session_'yyMMdd'_'HHmmss", Locale.US)
     parent / recFormat.format(new java.util.Date)
+  }
+
+  def version     : String = buildInfString("version")
+  def license     : String = buildInfString("license")
+  def homepage    : String = buildInfString("homepage")
+  def builtAt     : String = buildInfString("builtAtString")
+  def fullVersion : String = s"v$version, built $builtAt"
+
+  private def buildInfString(key: String): String = try {
+    val clazz = Class.forName("de.sciss.anemone.BuildInfo")
+    val m     = clazz.getMethod(key)
+    m.invoke(null).toString
+  } catch {
+    case NonFatal(_) => "?"
   }
 
   final case class Config(
@@ -251,6 +266,7 @@ object Anemone {
     }
 
   def main(args: Array[String]): Unit = {
+    println(s"Anemone Actiniaria $fullVersion")
     nuages.showLog = false
     // de.sciss.nuages. DSL.useScanFixed = true
     // defer(WebLookAndFeel.install())

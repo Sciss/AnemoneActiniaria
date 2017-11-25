@@ -244,12 +244,12 @@ object Anemone {
       NamedBusConfig("m-dpa", 0 to 1)
     ),
     lineInputs      = Vector(
-//      NamedBusConfig("ludger", 4 to 5),
+      NamedBusConfig("ludger", 2 to 3),
     ),
     lineOutputs     = Vector(
-      //      NamedBusConfig("sum", 24, 2)
+      NamedBusConfig("sum", 8 to 9)
     ),
-    device    = Some("Wolkenpumpe"),
+    device    = Some("SeaM"),
     database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
     timeline  = true // false
   )
@@ -307,6 +307,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     sCfg.masterGroups       = config.masterGroups
     // sCfg.highPass           = 100
     sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
+    sCfg.plugins            = true
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)
@@ -323,8 +324,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
   override protected def registerProcesses(nuages: Nuages[S], nCfg: Nuages.Config, sCfg: ScissProcs.Config)
                                           (implicit tx: S#Tx, cursor: Cursor[S]): Unit = {
     super.registerProcesses(nuages, nCfg, sCfg)
-    // Populate.registerActions[S]()
-    Populate.apply(nuages, nCfg, sCfg)
+    Populate(nuages, nCfg, sCfg)
   }
 
   def initTablet(): Unit = {

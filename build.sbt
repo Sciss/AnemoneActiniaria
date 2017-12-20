@@ -10,6 +10,7 @@ lazy val soundProcessesVersion  = "3.16.1"
 lazy val subminVersion          = "0.2.2"
 lazy val lucreVersion           = "3.5.0"
 lazy val ugenVersion            = "1.17.1"
+lazy val negatumVersion         = "0.4.0"
 
 resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
 
@@ -24,6 +25,7 @@ libraryDependencies ++= Seq(
   "de.sciss" %  "submin"                      % subminVersion,
   "de.sciss" %% "lucre-core"                  % lucreVersion,
   "de.sciss" %% "lucre-bdb"                   % lucreVersion,
+  "de.sciss" %% "negatum"                     % negatumVersion,
   "de.sciss" %% "scalacolliderugens-plugins"  % ugenVersion
 )
 

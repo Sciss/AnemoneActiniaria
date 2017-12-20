@@ -254,7 +254,26 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = SeaM
+  lazy val CUBE = Config(
+    masterChannels    = 0 to 11,
+    soloChannels      = 12 until 12,
+    generatorChannels = 4,
+    micInputs         = Vector(
+//      NamedBusConfig("m-dpa", 0 to 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 0 to 1),
+//      NamedBusConfig("beat" , 4 to 4)
+    ),
+    lineOutputs     = Vector(
+//      NamedBusConfig("sum", 8 to 9)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true  // false
+  )
+
+  private val config: Config = CUBE
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

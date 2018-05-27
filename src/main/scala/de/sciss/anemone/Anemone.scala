@@ -175,25 +175,6 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val Impuls = Config(
-    masterChannels    = 0 to 3,
-    soloChannels      = 4 to 5,
-    generatorChannels = 4,
-    micInputs         = Vector(
-      NamedBusConfig("m-dpa", 0 to 1)
-    ),
-    lineInputs      = Vector(
-      NamedBusConfig("pirro", 4 to 5),
-      NamedBusConfig("beat" , 6 to 6)
-    ),
-    lineOutputs     = Vector(
-      //      NamedBusConfig("sum", 24, 2)
-    ),
-    device    = Some("Wolkenpumpe"),
-    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
-    timeline  = true // false
-  )
-
   val NoSolo: Range = 0 until 0
 
   lazy val BEAST = Config(
@@ -273,7 +254,27 @@ object Anemone {
     timeline  = true  // false
   )
 
-  private val config: Config = CUBE
+  lazy val Impuls = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 4 to 5,
+    generatorChannels = 4,
+    micInputs         = Vector(
+//      NamedBusConfig("m-dpa", 0 to 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 4 to 5)
+//      NamedBusConfig("pirro", 0 to 1)
+//      NamedBusConfig("beat" , 6 to 6)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = Impuls
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

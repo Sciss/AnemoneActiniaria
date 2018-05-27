@@ -67,30 +67,30 @@ object Populate {
 
     // -------------- SEAM --------------
 
-    val dirUniv = file("/data/projects/SeaM20/audio_work/")
-    val fUniv   = dirUniv / "univ-arr.aif"
-    val locUniv = ArtifactLocation.newConst[S](dirUniv)
-    val procUniv = generator("univ") {
-      val thresh  = -80.dbamp
-      val runIn   = LocalIn.kr(0)
-      val speed   = runIn // * (44100/SampleRate.ir)
-      val disk0   = proc.graph.VDiskIn.ar("file", speed = speed, loop = 0)
-      val disk    = LeakDC.ar(disk0)
-      // NOTE: DetectSilence won't output 1 if the threshold has never been crossed.
-      // Thus we add an initial spike
-      val silM    = DetectSilence.ar(disk0 + Impulse.ar(0), amp = thresh, dur = 0.3)
-      val silAll  = Reduce.&(silM)
-      val pRun    = pAudio("run", ParamSpec(0, 1, IntWarp), default = 0f) // (1.0))
-      val runTr   = Trig1.ar(pRun)  // XXX TODO --- do we need to trigger?
-      val runOut  = SetResetFF.ar(runTr, silAll)
-      LocalOut.kr(runOut)
-      val noClick = Line.ar(0, 1, 0.1)  // suppress DC since VDiskIn starts at speed zero
-      disk * noClick
-    }
-    val artUniv   = Artifact(locUniv, fUniv)
-    val specUniv  = AudioFile.readSpec(fUniv)
-    val cueUniv   = AudioCue.Obj[S](artUniv, specUniv, 0L, 1.0)
-    procUniv.attr.put("file", cueUniv)
+//    val dirUniv = file("/data/projects/SeaM20/audio_work/")
+//    val fUniv   = dirUniv / "univ-arr.aif"
+//    val locUniv = ArtifactLocation.newConst[S](dirUniv)
+//    val procUniv = generator("univ") {
+//      val thresh  = -80.dbamp
+//      val runIn   = LocalIn.kr(0)
+//      val speed   = runIn // * (44100/SampleRate.ir)
+//      val disk0   = proc.graph.VDiskIn.ar("file", speed = speed, loop = 0)
+//      val disk    = LeakDC.ar(disk0)
+//      // NOTE: DetectSilence won't output 1 if the threshold has never been crossed.
+//      // Thus we add an initial spike
+//      val silM    = DetectSilence.ar(disk0 + Impulse.ar(0), amp = thresh, dur = 0.3)
+//      val silAll  = Reduce.&(silM)
+//      val pRun    = pAudio("run", ParamSpec(0, 1, IntWarp), default = 0f) // (1.0))
+//      val runTr   = Trig1.ar(pRun)  // XXX TODO --- do we need to trigger?
+//      val runOut  = SetResetFF.ar(runTr, silAll)
+//      LocalOut.kr(runOut)
+//      val noClick = Line.ar(0, 1, 0.1)  // suppress DC since VDiskIn starts at speed zero
+//      disk * noClick
+//    }
+//    val artUniv   = Artifact(locUniv, fUniv)
+//    val specUniv  = AudioFile.readSpec(fUniv)
+//    val cueUniv   = AudioCue.Obj[S](artUniv, specUniv, 0L, 1.0)
+//    procUniv.attr.put("file", cueUniv)
 
     // --------------- ANEMONE ----------------
 

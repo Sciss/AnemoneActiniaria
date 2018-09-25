@@ -98,7 +98,7 @@ object Speakers {
   /** Selected speakers with coordinates normalized to (0, 1) */
   val selectN: Vec[Vector2] = select.map { case Vector2(x, y) =>
     import numbers.Implicits._
-    Vector2(x.linlin(minX, maxX, 0, 1), y.linlin(minY, maxY, 0, 1))
+    Vector2(x.linLin(minX, maxX, 0, 1), y.linLin(minY, maxY, 0, 1))
   }
 
   final case class Proj(x: Float, y: Float, loc: Float) {

@@ -165,7 +165,7 @@ object Promenade {
       val timeUp_1        = Protect(combN_2, 0.0, 30.0, dynamic = false)
       val timeDown_0      = Protect(31.062782, 0.0, 30.0, dynamic = false)
       val lagUD_1         = LagUD.ar(in_26, timeUp = timeUp_1, timeDown = timeDown_0)
-      val amclip          = phase_1 amclip min_97
+      val amclip          = phase_1 amClip min_97
       val in_27           = Protect(0.0026768947, -inf, inf, dynamic = true)
       val coeff_2         = Protect(lagUD_1, -0.999, 0.999, dynamic = false)
       val dryLevel_1      = Integrator.ar(in_27, coeff = coeff_2)

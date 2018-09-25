@@ -1,17 +1,16 @@
 name               := "AnemoneActiniaria"
 version            := "0.6.0-SNAPSHOT"
 organization       := "de.sciss"
-scalaVersion       := "2.12.4"
+scalaVersion       := "2.12.6"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion     = "2.22.0"
-lazy val soundProcessesVersion  = "3.17.0"
+lazy val wolkenpumpeVersion     = "2.26.0"
+lazy val soundProcessesVersion  = "3.21.3"
 lazy val subminVersion          = "0.2.2"
-lazy val lucreVersion           = "3.5.0"
-lazy val ugenVersion            = "1.17.1"
-lazy val negatumVersion         = "0.5.0"
-lazy val numbersVersion         = "0.1.5"
+lazy val lucreVersion           = "3.9.1"
+lazy val ugenVersion            = "1.19.1"
+lazy val negatumVersion         = "0.6.0"
 
 resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
 
@@ -27,7 +26,8 @@ libraryDependencies ++= Seq(
   "de.sciss" %% "lucre-core"                  % lucreVersion,
   "de.sciss" %% "lucre-bdb"                   % lucreVersion,
   "de.sciss" %% "negatum"                     % negatumVersion,
-  "de.sciss" %% "numbers"                     % numbersVersion, // (sbt bug)
+  "de.sciss" %% "scalacolliderugens-core"     % ugenVersion,    // (sbt bug)
+  "de.sciss" %  "scalacolliderugens-spec"     % ugenVersion,    // (sbt bug)
   "de.sciss" %% "scalacolliderugens-plugins"  % ugenVersion
 )
 

@@ -13,12 +13,9 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
-import de.sciss.file._
 import de.sciss.lucre.stm
+import de.sciss.lucre.stm.Folder
 import de.sciss.nuages.{ExpWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
-import de.sciss.synth.io.AudioFile
-import de.sciss.synth.proc.{AudioCue, Folder}
 import de.sciss.synth.proc.Implicits._
 import de.sciss.{nuages, synth}
 

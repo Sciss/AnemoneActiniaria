@@ -211,7 +211,7 @@ object Mutagens {
       val v56 = 0.09739249
       val v57 = HPF.ar(v52, v56)
       val v58 = v55 excess v57
-      val v59 = v54 hypotx v58
+      val v59 = v54 hypotApx v58
       val v60 = 0.023961771
       val v61 = 0.0049379473
       val v62 = Trig1.ar(v60, v61)

@@ -262,7 +262,7 @@ object Cracks {
           def mkAmp(): GE = {
             val db0 = pAudio("amp", ParamSpec(-inf, 20, DbFaderWarp), default(-inf))
             val db  = db0 - 10 * (db0 < -764)  // BUG IN SUPERCOLLIDER
-            val res = db.dbamp
+            val res = db.dbAmp
             CheckBadValues.ar(res, id = 666)
             res
           }

@@ -42,7 +42,7 @@ object FifteenBeeThreeCee {
       val width           = yi max 0.0
       val in_0            = VarSaw.ar(freq = 100.5704 !! numChannels, iphase = 0.0, width = width)
       val twoPole         = TwoPole.ar(in_0, freq = 55.773136, radius = 1.0)
-      val scaleneg        = twoPole scaleneg 0.0014409359
+      val scaleneg        = twoPole scaleNeg 0.0014409359
       val in_1            = LeakDC.ar(0.016513553 !! numChannels, coeff = 0.995)
       val oneZero         = OneZero.ar(in_1, coeff = 1.0)
       val mod             = twoPole % oneZero
@@ -50,7 +50,7 @@ object FifteenBeeThreeCee {
       val k               = DelayN.ar(in_2, maxDelayTime = 20.0, delayTime = 0.23810405)
       val gbmanL          = GbmanL.ar(freq = 55.773148 !! numChannels, xi = 100.5704, yi = 163.37988)
       val b_0             = LFDNoise3.ar(1551.5026 !! numChannels)
-      val a               = 0.016513553 scaleneg b_0
+      val a               = 0.016513553 scaleNeg b_0
       val decayTime       = LinCongN.ar(freq = gbmanL, a = a, c = 100.5704, m = 4734.57, xi = 100.5704)
       val max_0           = twoPole max 0.0
       val delayTime_0     = max_0 min 20.0
@@ -88,8 +88,8 @@ object FifteenBeeThreeCee {
       val roomSize        = max_5 min 300.0
       // val gVerb           = GVerb.ar(in_10, roomSize = roomSize, revTime = revTime, damping = damping, inputBW = 0.0, spread = spread, dryLevel = delay2, earlyRefLevel = 2.5205823E-4, tailLevel = 0.0073382077, maxRoomSize = 300.0)
       val gVerb           = GVerb.ar(Mix.mono(in_10),
-        roomSize = roomSize \ 0, revTime = revTime \ 0,
-        damping = damping \ 0, inputBW = 0.0, spread = spread \ 0, dryLevel = delay2 \ 0,
+        roomSize = roomSize.out(0), revTime = revTime.out(0),
+        damping = damping.out(0), inputBW = 0.0, spread = spread.out(0), dryLevel = delay2.out(0),
         earlyRefLevel = 2.5205823E-4, tailLevel = 0.0073382077, maxRoomSize = 300.0)
       val in_11           = LeakDC.ar(8.832454 !! numChannels, coeff = 0.995)
       val lPZ1            = LPZ1.ar(in_11)
@@ -213,7 +213,7 @@ object FifteenBeeThreeCee {
       val max_2           = delay1_0 max 0.0
       val width_0         = max_2 min 1.0
       val lFGauss_0       = LFGauss.ar(dur = 5.0E-5, width = width_0, phase = 1.0, loop = 1644.8522, doneAction = doNothing)
-      val sumsqr          = lFGauss_0 sumsqr 117.86163
+      val sumsqr          = lFGauss_0 sumSqr 117.86163
       val a_0             = LFDClipNoise.ar(0.8250135 !! numChannels)
       val fold2           = -697.5932 fold2 lFPar_0
       val bitAnd          = fold2 & 0.018849522
@@ -243,7 +243,7 @@ object FifteenBeeThreeCee {
       val lag_0           = Lag.ar(in_6, time = 0.0)
       val freq_2          = SampleRate.ir * 0.5 // Nyquist()
       val freq_3          = LinCongN.ar(freq = freq_2, a = -0.36279276, c = lFPulse_0, m = 20.145914, xi = 0.10357987)
-      val sqrdif          = freq_3 sqrdif -2425.7073
+      val sqrdif          = freq_3 sqrDif -2425.7073
       val plus_0          = freq_3 + quadN_0
       val lFDClipNoise    = LFDClipNoise.ar(7.531644 !! numChannels)
       val cuspN_0         = CuspN.ar(freq = freq_3, a = lFDClipNoise, b = lFPulse_0, xi = 0.8250135)
@@ -286,8 +286,8 @@ object FifteenBeeThreeCee {
       val spread_0        = max_14 min 43.0
       val roomSize_0      = max_12 min 0.8250135
       val in_13           = GVerb.ar(Mix.mono(in_12),
-        roomSize = roomSize_0 \ 0, revTime = 0.0, damping = damping_0 \ 0, inputBW = 0.0,
-        spread = spread_0 \ 0, dryLevel = 1.0, earlyRefLevel = 0.8250135,
+        roomSize = roomSize_0.out(0), revTime = 0.0, damping = damping_0.out(0), inputBW = 0.0,
+        spread = spread_0.out(0), dryLevel = 1.0, earlyRefLevel = 0.8250135,
         tailLevel = -11.958342, maxRoomSize = 0.8250135)
       val delay1_1        = Delay1.ar(in_13)
       val max_15          = delay1_1 max -3.0
@@ -309,7 +309,7 @@ object FifteenBeeThreeCee {
       val max_19          = delayL_0 max 0.0
       val iphase_2        = max_19 min 1.0
       val lFPar_2         = LFPar.ar(freq = 0.01, iphase = iphase_2)
-      val freq_4          = lFPar_2 amclip quadN_0
+      val freq_4          = lFPar_2 amClip quadN_0
       val linCongC_0      = LinCongC.ar(freq = freq_4, a = 0.0, c = 0.8250135, m = 0.015739825, xi = 1.0)
       val in_17           = LeakDC.ar(132.21826 !! numChannels, coeff = 0.995)
       val delay2_0        = Delay2.ar(in_17)
@@ -329,15 +329,15 @@ object FifteenBeeThreeCee {
       val max_23          = lFPar_1 max 0.0
       val damping_1       = max_23 min 1.0
       val roomSize_1      = max_21 min 0.55
-      val gVerb_0         = GVerb.ar(Mix.mono(in_20), roomSize = roomSize_1 \ 0, revTime = revTime_0 \ 0,
-        damping = damping_1 \ 0, inputBW = 0.0, spread = 43.0, dryLevel = 0.0,
-        earlyRefLevel = earlyRefLevel_0 \ 0, tailLevel = -0.008399427, maxRoomSize = 0.55)
+      val gVerb_0         = GVerb.ar(Mix.mono(in_20), roomSize = roomSize_1.out(0), revTime = revTime_0.out(0),
+        damping = damping_1.out(0), inputBW = 0.0, spread = 43.0, dryLevel = 0.0,
+        earlyRefLevel = earlyRefLevel_0.out(0), tailLevel = -0.008399427, maxRoomSize = 0.55)
       val in_21           = LeakDC.ar(0.007981387, coeff = 0.995)
       val max_24          = atan2 max 0.55
       val roomSize_2      = max_24 min 300.0
-      val gVerb_1         = GVerb.ar(Mix.mono(in_21), roomSize = roomSize_2 \ 0,
+      val gVerb_1         = GVerb.ar(Mix.mono(in_21), roomSize = roomSize_2.out(0),
         revTime = 0.0, damping = 1.0, inputBW = 0.66143084, spread = 43.0,
-        dryLevel = lFPar_1 \ 0, earlyRefLevel = 13.28049, tailLevel = 0.5,
+        dryLevel = lFPar_1.out(0), earlyRefLevel = 13.28049, tailLevel = 0.5,
         maxRoomSize = 300.0)
       val in_22           = LeakDC.ar(1.5042997E-4, coeff = 0.995)
       val max_25          = ring2_1 max 0.0
@@ -347,14 +347,14 @@ object FifteenBeeThreeCee {
       val maxRoomSize_0   = max_26 min 300.0
       val roomSize_3      = Constant(7.107886f) min maxRoomSize_0
       val a_2             = GVerb.ar(Mix.mono(in_22),
-        roomSize = roomSize_3 \ 0, revTime = revTime_1 \ 0, damping = 0.0,
-        inputBW = 1.5274479E-4, spread = spread_1 \ 0, dryLevel = quadN_0 \ 0,
-        earlyRefLevel = -5452.869, tailLevel = lFPulse_0 \ 0, maxRoomSize = maxRoomSize_0 \ 0)
+        roomSize = roomSize_3.out(0), revTime = revTime_1.out(0), damping = 0.0,
+        inputBW = 1.5274479E-4, spread = spread_1.out(0), dryLevel = quadN_0.out(0),
+        earlyRefLevel = -5452.869, tailLevel = lFPulse_0.out(0), maxRoomSize = maxRoomSize_0.out(0))
       val cuspN_1         = CuspN.ar(freq = -0.008399427, a = a_2, b = lorenzL, xi = lFDClipNoise)
       val in_23           = LeakDC.ar(0.0028571805 !! numChannels, coeff = 0.995)
       val delay2_1        = Delay2.ar(in_23)
       val geq             = delay2_1 >= 41.52797
-      val freq_5          = -4.619783 absdif plus_0
+      val freq_5          = -4.619783 absDif plus_0
       val cuspN_2         = CuspN.ar(freq = freq_5, a = a_0, b = lFPar_0, xi = lag_0)
       val linCongC_1      = LinCongC.ar(freq = 20.145914, a = min, c = 0.7677357, m = 1.0, xi = 0.7677357)
       val max_27          = linCongC_1 max 0.0
@@ -363,7 +363,7 @@ object FifteenBeeThreeCee {
       val in_24           = LeakDC.ar(0.8250135 !! numChannels, coeff = 0.995)
       val delay1_2        = Delay1.ar(in_24)
       val clip2_1         = 1605.479 clip2 gbmanL_0
-      val amclip          = 0.0 amclip fold2
+      val amclip          = 0.0 amClip fold2
       val freq_6          = SampleRate.ir * 0.5 // Nyquist()
       val quadL_1         = QuadL.ar(freq = freq_6, a = 0.01589117, b = 0.0, c = 9.145937, xi = 0.8250135)
       val in_25           = LeakDC.ar(-4.619783, coeff = 0.995)
@@ -474,7 +474,7 @@ object FifteenBeeThreeCee {
       val in_14           = LeakDC.ar(in_12, coeff = 0.995)
       val lag2_0          = Lag2.ar(in_14, time = 0.0)
       val b_0             = yi_1 hypot in_12
-      val zi              = b_0 sqrdif 57.973328
+      val zi              = b_0 sqrDif 57.973328
       val lorenzL_0       = LorenzL.ar(freq = freq_3, s = s_0, r = 1800.9755, b = 1.2012068E7, h = 0.0, xi = xi_0, yi = -0.025459621, zi = zi)
       val max_8           = s_0 max -3.0
       val a_0             = max_8 min 3.0
@@ -557,7 +557,7 @@ object FifteenBeeThreeCee {
       val gbmanN          = GbmanN.ar(freq = 456.53043 !! numChannels, xi = 0.29398212, yi = 1814.6665)
       val in_30           = LeakDC.ar(958.20404 !! numChannels, coeff = 0.995)
       val decay2          = Decay2.ar(in_30, attack = 0.015426122, release = 30.0)
-      val difsqr          = 0.023828123 difsqr decay2
+      val difsqr          = 0.023828123 difSqr decay2
       val in_31           = LeakDC.ar(2555.6104 !! numChannels, coeff = 0.995)
       val rLPF            = RLPF.ar(in_31, freq = 440.0, rq = 0.023828123)
       val max_20          = combC max 0.0
@@ -582,9 +582,9 @@ object FifteenBeeThreeCee {
       val max_24          = rLPF max 0.0
       val delayTime_5     = max_24 min 0.02646789
       val allpassN_1      = AllpassN.ar(in_34, maxDelayTime = 0.02646789, delayTime = delayTime_5, decayTime = 149.4075)
-      val amclip          = allpassN_1 amclip in_2
+      val amclip          = allpassN_1 amClip in_2
       val lorenzL_1       = LorenzL.ar(freq = 47.990856, s = s_1, r = -159.09827, b = b_0, h = 0.06, xi = 0.009065811, yi = yi_1, zi = 1800.9755)
-      val sumsqr          = 3624.9285 sumsqr lFGauss_0
+      val sumsqr          = 3624.9285 sumSqr lFGauss_0
       val max_25          = x0_1 max 0.0
       val iphase_3        = max_25 min 4.0
       val lFTri           = LFTri.ar(freq = 440.0, iphase = iphase_3)
@@ -608,7 +608,7 @@ object FifteenBeeThreeCee {
       val eq              = syncSaw_0 sig_== 0.001002046
       val tailLevel       = eq atan2 1.4401373
       val latoocarfianN   = LatoocarfianN.ar(freq = 0.41197228 !! numChannels, a = 3.0, b = 0.5, c = 0.5, d = -0.008222404, xi = 662.35516, yi = 3721.9795)
-      val in_0            = 0.008054061 sumsqr latoocarfianN
+      val in_0            = 0.008054061 sumSqr latoocarfianN
       val in_1            = LeakDC.ar(in_0, coeff = 0.995)
       val freq_0          = HPZ1.ar(in_1)
       val lFDNoise3       = LFDNoise3.ar(freq_0)
@@ -629,7 +629,7 @@ object FifteenBeeThreeCee {
       val max_3           = syncSaw_1 max 0.0
       val iphase_0        = max_3 min 1.0
       val lFPar_1         = LFPar.ar(freq = 4.814985, iphase = iphase_0)
-      val sqrdif          = lFPar_1 sqrdif combC
+      val sqrdif          = lFPar_1 sqrDif combC
       val in_4            = SyncSaw.ar(syncFreq = 0.01 !! numChannels, sawFreq = 440.0)
       val a_0             = Lag3.ar(in_4, time = 0.32421353)
       val in_5            = LeakDC.ar(0.42644614 !! numChannels, coeff = 0.995)
@@ -648,7 +648,7 @@ object FifteenBeeThreeCee {
       val max_7           = gbmanL max 0.0
       val time_1          = max_7 min 30.0
       val lag2_1          = Lag2.ar(in_8, time = time_1)
-      val b_0             = lag2_1 sqrsum -0.0014914646
+      val b_0             = lag2_1 sqrSum -0.0014914646
       val decayTime_0     = 0.00265905 ring3 hPZ1
       val max_8           = b_0 max 0.1
       val freq_3          = max_8 min 20000.0
@@ -662,10 +662,10 @@ object FifteenBeeThreeCee {
       val max_12          = clip2 max 0.0
       val damping_0       = max_12 min 1.0
       val roomSize        = max_10 min 38.01318
-      val in_10           = GVerb.ar(Mix.mono(in_9), roomSize = roomSize \ 0, revTime = revTime \ 0,
-        damping = damping_0 \ 0, inputBW = 0.007950359, spread = 43.0,
+      val in_10           = GVerb.ar(Mix.mono(in_9), roomSize = roomSize.out(0), revTime = revTime.out(0),
+        damping = damping_0.out(0), inputBW = 0.007950359, spread = 43.0,
         dryLevel = -0.010030854, earlyRefLevel = 0.0062145633,
-        tailLevel = tailLevel \ 0, maxRoomSize = 38.01318)
+        tailLevel = tailLevel.out(0), maxRoomSize = 38.01318)
       val bitXor          = in_10 ^ -0.008222404
       val hypot           = lFPar_0 hypot in_10
       val in_11           = LeakDC.ar(0.017735861 !! numChannels, coeff = 0.995)
@@ -702,7 +702,7 @@ object FifteenBeeThreeCee {
       val maxDelayTime_1  = max_16 min 20.0
       val delayTime_3     = Constant(0.3213919f) min maxDelayTime_1
       val delayL          = DelayL.ar(in_17, maxDelayTime = maxDelayTime_1, delayTime = delayTime_3)
-      val scaleneg        = 0.0045420905 scaleneg in_0
+      val scaleneg        = 0.0045420905 scaleNeg in_0
       val in_18           = SyncSaw.ar(syncFreq = 1.892141 !! numChannels, sawFreq = 0.41197228)
       val in_19           = LeakDC.ar(in_18, coeff = 0.995)
       val max_17          = bitXor max 0.0
@@ -710,9 +710,9 @@ object FifteenBeeThreeCee {
       val max_18          = hypot max 0.0
       val inputBW_0       = max_18 min 1.0
       val gVerb           = GVerb.ar(Mix.mono(in_19), roomSize = 0.55, revTime = 0.63454044,
-        damping = damping_1 \ 0, inputBW = inputBW_0 \ 0, spread = 0.011486273,
+        damping = damping_1.out(0), inputBW = inputBW_0.out(0), spread = 0.011486273,
         dryLevel = 0.056376386, earlyRefLevel = -0.0014914646, tailLevel = 0.42644614, maxRoomSize = 0.55)
-      val hypotx          = 3721.9795 hypotx freq_0
+      val hypotx          = 3721.9795 hypotApx freq_0
       val in_20           = LeakDC.ar(0.4886342 !! numChannels, coeff = 0.995)
       val lag2_3          = Lag2.ar(in_20, time = 30.0)
       val lt              = 5.212914 < hPF
@@ -751,11 +751,11 @@ object FifteenBeeThreeCee {
       val lag_0           = Lag.ar(in_6, time = 0.0)
       val freq_3          = SampleRate.ir * 0.5 // Nyquist()
       val linCongN        = LinCongN.ar(freq = freq_3, a = -0.36279276, c = lFPulse_0, m = 20.145914, xi = 0.10357987)
-      val sqrdif          = linCongN sqrdif -2425.7073
+      val sqrdif          = linCongN sqrDif -2425.7073
       val max_11          = delayL_0 max 0.0
       val iphase_1        = max_11 min 1.0
       val b_0             = LFPar.ar(freq = 0.01, iphase = iphase_1)
-      val freq_5          = b_0 amclip quadN_0
+      val freq_5          = b_0 amClip quadN_0
       val linCongC_0      = LinCongC.ar(freq = freq_5, a = 0.0, c = 0.8250135, m = 0.015739825, xi = 1.0)
       val gbmanL_1        = GbmanL.ar(freq = 152.6102 !! numChannels, xi = 7.531644, yi = 15.662841)
       val max_13          = lag_0 max 0.0

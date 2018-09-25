@@ -74,7 +74,7 @@ object Imperfect {
           val bad = CheckBadValues.ar(sig0)
           val sig = Gate.ar(sig0, bad sig_== 0)
           masterChans.zipWithIndex.foreach { case (ch, i) =>
-            val sig0 = sig \ i
+            val sig0 = sig.out(i)
             val hpf  = sCfg.highPass
             val sig1 = if (hpf >= 16 && hpf < 20000) HPF.ar(sig0, hpf) else sig0
             Out.ar(ch, sig1)   // XXX TODO - should go to a bus w/ limiter
@@ -100,7 +100,7 @@ object Imperfect {
           import ugen._
           val db0 = pAudio("amp", ParamSpec(-inf, 20, DbFaderWarp), default(-inf))
           val db  = db0 - 10 * (db0 < -764)  // BUG IN SUPERCOLLIDER
-          val res = db.dbamp
+          val res = db.dbAmp
           CheckBadValues.ar(res, id = 666)
           res
         }
@@ -124,10 +124,10 @@ object Imperfect {
 
           var sum: GE = 0
           for (ch <- 0 until numOut) {
-            val inCh  = inSig \ ch
-            val lagCh = pLag  \ ch
-            val xCh   = x     \ ch
-            val yCh   = y     \ ch
+            val inCh  = inSig.out(ch)
+            val lagCh = pLag .out(ch)
+            val xCh   = x    .out(ch)
+            val yCh   = y    .out(ch)
             val del   = NegatumDelaunay(xCh, yCh)
             val ampL  = Lag.kr(del, time = lagCh)
             val sig   = inCh * ampL
@@ -136,7 +136,7 @@ object Imperfect {
           val outSig = sum
           // NumChannels(outSig).poll(0, "num-out")
           // placeChannels(outSig)
-          val karlheinz: GE = Vector.tabulate(outChannels)(ch => outSig \ ch)
+          val karlheinz: GE = Vector.tabulate(outChannels)(ch => outSig.out(ch))
           karlheinz
         }
 

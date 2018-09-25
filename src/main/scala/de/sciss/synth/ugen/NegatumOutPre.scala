@@ -22,7 +22,7 @@ final case class NegatumOutPre(in: GE) extends GE.Lazy with AudioRated {
     val sig1  = Gate.ar(sig0, isOk)
     val sig2  = if (!CLIP     ) sig1 else sig1.clip2(1)
     val sig3  = if (!LEAK_DC  ) sig2 else LeakDC.ar(sig2) * 0.47
-    val sig4  = if (!LIMITER  ) sig3 else Limiter.ar(sig3, -0.2.dbamp)
+    val sig4  = if (!LIMITER  ) sig3 else Limiter.ar(sig3, -0.2.dbAmp)
     val sig5  = if (!HIGH_PASS) sig4 else HPF.ar(sig4, 20)
     val sig6  = sig5
 //    if (!NORMALIZE) sig5 else {

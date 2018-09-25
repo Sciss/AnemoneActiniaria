@@ -19,14 +19,14 @@ import java.util.Locale
 import de.sciss.equal.Implicits._
 import de.sciss.file._
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Cursor
+import de.sciss.lucre.stm.{Cursor, Folder}
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth._
 import de.sciss.nuages
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.submin.Submin
-import de.sciss.synth.proc.{Durable, Folder, Timeline}
+import de.sciss.synth.proc.{Durable, Timeline}
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
@@ -274,7 +274,27 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = Impuls
+  lazy val LAquila = Config(
+    masterChannels    = 0 to 7,
+    soloChannels      = 8 to 9,
+    generatorChannels = 4,
+    micInputs         = Vector(
+      //      NamedBusConfig("m-dpa", 0 to 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 2 to 3)
+      //      NamedBusConfig("pirro", 0 to 1)
+      //      NamedBusConfig("beat" , 6 to 6)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = LAquila
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

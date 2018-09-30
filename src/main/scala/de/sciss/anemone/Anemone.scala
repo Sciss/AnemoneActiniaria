@@ -282,7 +282,7 @@ object Anemone {
       //      NamedBusConfig("m-dpa", 0 to 1)
     ),
     lineInputs      = Vector(
-      NamedBusConfig("pirro", 2 to 3)
+      NamedBusConfig("pirro", 4 to 5)
       //      NamedBusConfig("pirro", 0 to 1)
       //      NamedBusConfig("beat" , 6 to 6)
     ),

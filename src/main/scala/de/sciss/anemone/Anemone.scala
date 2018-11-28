@@ -19,14 +19,14 @@ import java.util.Locale
 import de.sciss.equal.Implicits._
 import de.sciss.file._
 import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Cursor, Folder}
+import de.sciss.lucre.stm.Folder
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth._
 import de.sciss.nuages
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.submin.Submin
-import de.sciss.synth.proc.{Durable, Timeline}
+import de.sciss.synth.proc.{Durable, Timeline, Universe}
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
@@ -294,7 +294,27 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = LAquila
+  lazy val Schwaermen = Config(
+    masterChannels    = 0 to 3,
+    soloChannels      = 4 to 5,
+    generatorChannels = 4,
+    micInputs         = Vector(
+      //      NamedBusConfig("m-dpa", 0 to 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 4 to 5)
+      //      NamedBusConfig("pirro", 0 to 1)
+      //      NamedBusConfig("beat" , 6 to 6)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = Schwaermen
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {
@@ -360,9 +380,8 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     if (config.device.isDefined) aCfg.deviceName = config.device
   }
 
-
   override protected def registerProcesses(nuages: Nuages[S], nCfg: Nuages.Config, sCfg: ScissProcs.Config)
-                                          (implicit tx: S#Tx, cursor: Cursor[S]): Unit = {
+                                 (implicit tx: S#Tx, universe: Universe[S]): Unit = {
     super.registerProcesses(nuages, nCfg, sCfg)
     Populate(nuages, nCfg, sCfg)
   }

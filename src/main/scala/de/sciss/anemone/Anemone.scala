@@ -22,10 +22,11 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Folder
 import de.sciss.lucre.stm.store.BerkeleyDB
 import de.sciss.lucre.synth._
-import de.sciss.nuages
+import de.sciss.{nuages, osc}
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.submin.Submin
+import de.sciss.synth.{SynthGraph, addAfter, addToTail}
 import de.sciss.synth.proc.{Durable, Timeline, Universe}
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
@@ -54,6 +55,8 @@ object Anemone {
   } catch {
     case NonFatal(_) => "?"
   }
+
+  final val USE_OSC_LIGHTS = true
 
   final case class Config(
                           masterChannels    : Range,
@@ -314,7 +317,32 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = Schwaermen
+  lazy val ZKM_Kubus = Config(
+    masterChannels    = 0 until 21,
+    masterGroups      = Vector(
+      NamedBusConfig("B",  0 to  6),  // bottom
+      NamedBusConfig("L",  7 to 13),  // low
+      NamedBusConfig("H", 14 to 17),  // high
+      NamedBusConfig("T", 18 to 20)   // top
+    ),
+    soloChannels      = NoSolo,
+    generatorChannels = 4,
+    micInputs         = Vector(
+//      NamedBusConfig("m-dpa", 0 to 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 0 to 3),
+//      NamedBusConfig("beat" , 4 to 4)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = ZKM_Kubus
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {
@@ -464,9 +492,57 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     super.run(nuagesH)
 
     if (config.tablet) cursor.step { implicit tx =>
-      auralSystem.whenStarted { _ =>
+      auralSystem.whenStarted { server =>
         Swing.onEDT {
           initTablet()
+        }
+        if (Anemone.USE_OSC_LIGHTS) {
+          println("Setting up OSC lights...")
+
+          import osc.Implicits._
+          val cfg = osc.UDP.Config()
+          cfg.localAddress = "192.168.0.77"
+          val transmitter = osc.UDP.Transmitter(cfg)
+
+          transmitter.connect()
+          val tgt = new java.net.InetSocketAddress("192.168.0.25", 0x4C69)
+          val graph = SynthGraph {
+            import de.sciss.synth._
+            import Ops._
+            import ugen._
+            val tr  = Impulse.kr(100.0)
+            val sig = In.ar("in".kr(0f), 2).abs
+            // sig.poll(tr, "HELO")
+            SendReply.kr(tr, sig, msgName = "/ld")
+          }
+          cursor.step { implicit tx =>
+            val syn = Synth.play(graph, Some("peak"))(server.defaultGroup, addAction = addAfter /* addToTail */,
+              dependencies = /* node :: */ Nil)
+            // syn.read(bus -> "in")
+            val NodeId = syn.peer.id
+            import de.sciss.synth.message
+            val trigResp = message.Responder.add(server.peer) {
+              // case message.Trigger(NodeId, 0, peak: Float) =>
+              case osc.Message("/ld", NodeId, 0, v1: Float, v2: Float) =>
+                // println(s"PEAK $peak")
+                // defer(fun(peak))
+                @inline def mkRGB(v: Float): Int = {
+                  val i   = Math.max(0, Math.min((v * 256).toInt, 255))
+                  val rgb = (i << 16) | (i << 8) | i
+                  rgb
+                }
+                val rgb1  = mkRGB(v1)
+                val rgb2  = mkRGB(v2)
+                val p     = osc.Message("/led", rgb1, rgb2)
+                transmitter.send(p, tgt)
+            }
+            // Responder.add is non-transactional. Thus, if the transaction fails, we need to remove it.
+            scala.concurrent.stm.Txn.afterRollback { _ =>
+              trigResp.remove()
+            } (tx.peer)
+            syn.onEnd(trigResp.remove())
+
+          }
         }
       }
     }

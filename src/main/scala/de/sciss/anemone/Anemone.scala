@@ -13,11 +13,14 @@
 
 package de.sciss.anemone
 
+import java.awt.Color
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+import de.sciss.audiowidgets.RotaryKnob
 import de.sciss.equal.Implicits._
 import de.sciss.file._
+import de.sciss.numbers
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Folder
 import de.sciss.lucre.stm.store.BerkeleyDB
@@ -28,12 +31,14 @@ import de.sciss.submin.Submin
 import de.sciss.synth.proc.{Durable, Timeline, Universe}
 import de.sciss.synth.{SynthGraph, addAfter}
 import de.sciss.{nuages, osc}
+import javax.swing.DefaultBoundedRangeModel
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
-import scala.swing.Swing
+import scala.swing.event.ValueChanged
+import scala.swing.{Dimension, Swing}
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -523,10 +528,35 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
               import de.sciss.synth._
               import Ops._
               import ugen._
-              val tr  = Impulse.kr(100.0)
-              val sig = In.ar("in".kr(0f), 2).abs
+              val tr    = Impulse.kr(100.0)
+              val sig1  = In.ar("in".kr(0f))
+              val sig2  = In.ar(NumOutputBuses.ir)
+              val sig   = Flatten(Seq(sig1, sig2)).abs
               SendReply.kr(tr, sig, msgName = "/ld")
             }
+
+            def mkRotary(value: Int, min: Int, max: Int)(fun: Int => Unit): Unit = {
+              val gg = new RotaryKnob(new DefaultBoundedRangeModel(value, 1, min, max))
+              gg.preferredSize = new Dimension(80, 80)
+              gg.maximumSize = gg.preferredSize
+              gg.minimumSize = gg.preferredSize
+              gg.listenTo(gg)
+              gg.reactions += {
+                case ValueChanged(_) =>
+                  fun(gg.value)
+              }
+              view.addSouthComponent(gg)
+            }
+
+            import numbers.Implicits._
+            var mLightOff     = 0
+            var mLightBoost1  = -40.dbAmp
+            var mLightBoost2  = -40.dbAmp
+
+            view.addSouthComponent(Swing.HStrut(8))
+            mkRotary(0, 0, 255)(mLightOff = _)
+            mkRotary(-40, -40, +40)(v => mLightBoost1 = v.dbAmp)
+            mkRotary(-40, -40, +40)(v => mLightBoost2 = v.dbAmp)
 
             val transmit: (Int, Int) => Unit =
               transmitterOpt match {
@@ -535,8 +565,19 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
                   transmitter.send(p, tgt)
                 }
 
-                case _ => (rgb1, rgb2) => {
+                case _ =>
+                  val c1 = new LightView // Swing.HStrut(16)
+                  val c2 = new LightView // Swing.HStrut(16)
+
+                  view.addSouthComponent(c1)
+                  view.addSouthComponent(c2)
+
+                  (rgb1, rgb2) => {
                   // println(rgb1.toHexString)
+                    Swing.onEDT {
+                      c1.foreground = new Color(rgb1)
+                      c2.foreground = new Color(rgb2)
+                    }
                 }
               }
 
@@ -548,13 +589,13 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
 
               val trigResp = message.Responder.add(server.peer) {
                 case osc.Message("/ld", NodeId, 0, v1: Float, v2: Float) =>
-                  @inline def mkRGB(v: Float): Int = {
-                    val i   = Math.max(0, Math.min((v * 256).toInt, 255))
+                  @inline def mkRGB(v: Float, boost: Float): Int = {
+                    val i   = Math.max(0, Math.min((v * 256 * boost).toInt + mLightOff, 255))
                     val rgb = (i << 16) | (i << 8) | i
                     rgb
                   }
-                  val rgb1  = mkRGB(v1)
-                  val rgb2  = mkRGB(v2)
+                  val rgb1  = mkRGB(v1, mLightBoost1)
+                  val rgb2  = mkRGB(v2, mLightBoost2)
                   transmit(rgb1, rgb2)
               }
               // Responder.add is non-transactional. Thus, if the transaction fails, we need to remove it.

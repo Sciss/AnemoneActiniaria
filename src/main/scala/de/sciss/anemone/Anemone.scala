@@ -529,9 +529,10 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
               import Ops._
               import ugen._
               val tr    = Impulse.kr(100.0)
-              val sig1  = In.ar("in".kr(0f))
-              val sig2  = In.ar(NumOutputBuses.ir)
-              val sig   = Flatten(Seq(sig1, sig2)).abs
+              val sig1a = In.ar("in".kr(0f)).abs
+              val sig1  = sig1a.squared // pow(8)
+              val sig2  = In.ar(NumOutputBuses.ir).abs
+              val sig   = Flatten(Seq(sig1, sig2))
               SendReply.kr(tr, sig, msgName = "/ld")
             }
 

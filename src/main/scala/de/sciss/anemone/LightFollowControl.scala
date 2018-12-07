@@ -49,25 +49,34 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
               // println(s"BUS = ${m.bus.busOption}")
               val now     = m.bus
               val before  = busRef.swap(Some(now))
+              // println("HA")
               if (!before.contains(now)) {
                 // println(s"NEW BUS $now")
                 synth.foreach { syn =>
                   busSetter().dispose()
+                  // println(s"BUS $now")
                   val reader = syn.read(now -> "in")
                   busSetter() = reader
                 }
               }
 
             case _ =>
+            // println("NOPE 3")
           }
 
         case _ =>
+        // println("NOPE 2")
       }
 
     case _ =>
   }
 
-  override def itemPressed(vi: VisualItem, e: MouseEvent): Unit = {
+  override def itemEntered(vi: VisualItem, e: MouseEvent): Unit = superChecker(vi)
+
+//  override def itemPressed(vi: VisualItem, e: MouseEvent): Unit = superChecker(vi)
+
+  @inline
+  private def superChecker(vi: VisualItem): Unit = {
     val r = vis.getRenderer(vi)
     r match {
       case _ /* pr */: NuagesShapeRenderer[_] =>
@@ -81,12 +90,16 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
             }
 
           case i: NuagesAttribute.Input[S] =>
+            // println("DING")
             if (i == lastPressed) return
             lastPressed = i
+            // println("DONG")
 
             csr.step { implicit tx =>
               i.inputParent match {
-                case p: NuagesParam[S] => nodePressed(p.parent)
+                case p: NuagesParam[S] =>
+                  // println("DANG")
+                  nodePressed(p.parent)
                 case _ =>
               }
             }
@@ -97,7 +110,7 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
 //            }
 
           case _ =>
-//            println("NOPE")
+            // println("NOPE")
         }
 
       case _ =>

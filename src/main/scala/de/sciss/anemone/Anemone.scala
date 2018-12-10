@@ -62,7 +62,7 @@ object Anemone {
     case NonFatal(_) => "?"
   }
 
-  final val USE_OSC_LIGHTS = true
+  final val USE_OSC_LIGHTS = false // true -- for ZKM concert 2018
 
   final case class Config(
                           masterChannels    : Range,

@@ -2,7 +2,7 @@
  *  Populate.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2019 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -46,6 +46,7 @@ object Populate {
     Mutagens          (dsl, sConfig, nConfig)
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
     Promenade         (dsl, sConfig, nConfig)
+    Almat             (dsl, sConfig, nConfig)
 //    Imperfect         (dsl, sConfig, nConfig)
 //    Cracks            (dsl, sConfig, nConfig)
 

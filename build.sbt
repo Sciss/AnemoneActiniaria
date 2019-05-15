@@ -9,7 +9,7 @@ lazy val wolkenpumpeVersion     = "2.28.2"
 lazy val soundProcessesVersion  = "3.23.1"
 lazy val subminVersion          = "0.2.2"
 lazy val lucreVersion           = "3.10.1"
-lazy val ugenVersion            = "1.19.4-SNAPSHOT"
+lazy val ugenVersion            = "1.19.4"
 lazy val negatumVersion         = "0.6.0"
 
 resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat

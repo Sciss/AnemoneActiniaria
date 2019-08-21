@@ -385,7 +385,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = AlmatMay2019
+  private val config: Config = MuWa
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

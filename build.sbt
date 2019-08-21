@@ -1,16 +1,16 @@
 name               := "AnemoneActiniaria"
-version            := "0.6.1-SNAPSHOT"
+version            := "0.7.0-SNAPSHOT"
 organization       := "de.sciss"
-scalaVersion       := "2.12.7"
+scalaVersion       := "2.12.9"
 licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt"))
 homepage           := Some(url(s"https://github.com/Sciss/${name.value}"))
 
-lazy val wolkenpumpeVersion     = "2.28.2"
-lazy val soundProcessesVersion  = "3.23.1"
-lazy val subminVersion          = "0.2.2"
-lazy val lucreVersion           = "3.10.1"
-lazy val ugenVersion            = "1.19.4"
-lazy val negatumVersion         = "0.6.0"
+lazy val wolkenpumpeVersion     = "2.35.0-SNAPSHOT"
+lazy val soundProcessesVersion  = "3.31.0-SNAPSHOT"
+lazy val subminVersion          = "0.2.5"
+lazy val lucreVersion           = "3.14.0-SNAPSHOT"
+lazy val ugenVersion            = "1.19.5"
+lazy val negatumVersion         = "0.9.0-SNAPSHOT"
 
 resolvers          += "Oracle Repository" at "http://download.oracle.com/maven"  // required for sleepycat
 
@@ -25,13 +25,15 @@ libraryDependencies ++= Seq(
   "de.sciss" %  "submin"                      % subminVersion,
   "de.sciss" %% "lucre-core"                  % lucreVersion,
   "de.sciss" %% "lucre-bdb"                   % lucreVersion,
-  "de.sciss" %% "negatum"                     % negatumVersion,
+  "de.sciss" %% "negatum-core"                % negatumVersion,
   "de.sciss" %% "scalacolliderugens-core"     % ugenVersion,    // (sbt bug)
   "de.sciss" %  "scalacolliderugens-spec"     % ugenVersion,    // (sbt bug)
   "de.sciss" %% "scalacolliderugens-plugins"  % ugenVersion
 )
 
 scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint:-stars-align,_")
+
+updateOptions := updateOptions.value.withLatestSnapshots(false)
 
 // ---- assembly ----
 

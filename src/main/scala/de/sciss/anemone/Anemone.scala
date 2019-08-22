@@ -20,6 +20,7 @@ import java.util.Locale
 import de.sciss.audiowidgets.RotaryKnob
 import de.sciss.equal.Implicits._
 import de.sciss.file._
+import de.sciss.fscape.lucre.FScape
 import de.sciss.numbers
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Folder
@@ -420,7 +421,9 @@ object Anemone {
     // de.sciss.nuages. DSL.useScanFixed = true
     // defer(WebLookAndFeel.install())
     Submin.install(true)
-    Wolkenpumpe.init()
+    Wolkenpumpe .init()
+    FScape      .init()
+
     config.database match {
       case Some(f) =>
         type S = Durable
@@ -457,6 +460,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     // sCfg.highPass           = 100
     sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
     sCfg.plugins            = true
+    sCfg.recDir             = file("/data/audio_work/nuages_test")
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.masterChannels     = Some(config.masterChannels)

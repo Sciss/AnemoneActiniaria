@@ -13,19 +13,31 @@
 
 package de.sciss.anemone
 
+import de.sciss.fscape.lucre.FScape
+import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{DSL, ExponentialWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
-import de.sciss.synth.GE
+import de.sciss.nuages.{DSL, ExponentialWarp, IntWarp, Nuages, ParamSpec, ScissProcs, Util}
+import de.sciss.synth
+import de.sciss.synth.proc.MacroImplicits.ControlMacroOps
 import de.sciss.synth.proc.Proc
 import de.sciss.synth.ugen._
+import de.sciss.synth.proc
+import de.sciss.lucre.artifact.{Artifact => _Artifact, ArtifactLocation => _ArtifactLocation}
 
 object Almat {
   def any2stringadd: Any = ()
 
-  def apply[S <: Sys[S]](dsl: DSL[S], sCfg: ScissProcs.Config, nConfig: Nuages.Config)
-                            (implicit tx: S#Tx, n: Nuages[S]): Unit = {
+  def mkActions[S <: Sys[S]]()(implicit tx: S#Tx): Map[String, stm.Obj[S]] = {
+    val recPrepare    = ScissProcs.actionRecPrepare[S]
+    val recDoneRender = ctlRecDoneRender[S]
+    Map("rec-prepare" -> recPrepare, "rec-done-render" -> recDoneRender)
+  }
+
+  def apply[S <: Sys[S]](dsl: DSL[S], sConfig: ScissProcs.Config, nConfig: Nuages.Config)
+                        (implicit tx: S#Tx, nuages: Nuages[S]): Unit = {
     import dsl._
-    import sCfg.genNumChannels
+    import sConfig.genNumChannels
+    import synth.GE
 
     def filterF   (name: String)(fun: GE => GE): Proc[S] =
       filter      (name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
@@ -55,5 +67,181 @@ object Almat {
         omega  * (pSelect sig_== 3)
       mix(in, flt, pMix)
     }
+
+    /////////////////////////////////////////
+
+    val mapActions = mkActions[S]()
+    applyWithActions[S](dsl, sConfig, nConfig, mapActions)
+  }
+
+  def applyWithActions[S <: Sys[S]](dsl: DSL[S], sConfig: ScissProcs.Config, nConfig: Nuages.Config,
+                                    actions: Map[String, stm.Obj[S]])
+                                   (implicit tx: S#Tx, nuages: Nuages[S]): Unit = {
+    import dsl._
+    import sConfig.genNumChannels
+    import synth.GE
+
+    def sinkF     (name: String)(fun: GE => Unit): proc.Proc[S] =
+      sink        (name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
+
+    val sinkRecFourier = sinkF("rec-fourier") { in =>
+      val disk = proc.graph.DiskOut.ar(Util.attrRecArtifact, in)
+      disk.poll(0, "disk")
+    }
+
+    val sinkPrepObj       = actions("rec-prepare")
+    val sinkDoneRenderObj = actions("rec-done-render")
+    val recDirObj   = _ArtifactLocation.newConst[S](sConfig.recDir)
+
+    // XXX TODO --- while we cannot use expr.Artifact("value:sub"),
+    // let's just copy the artifact into all objects that use it.
+    // This works, because the attribute updater takes care of
+    // Artifact.Modifiable.
+    val recFileTEST     = _Artifact[S](recDirObj, _Artifact.Child("out.irc")) // .newConst[S](sConfig.recDir)
+    val renderFileTEST  = _Artifact[S](recDirObj, _Artifact.Child("render.aif")) // .newConst[S](sConfig.recDir)
+    sinkPrepObj       .attr.put(Util.attrRecDir     , recFileTEST)
+    sinkDoneRenderObj .attr.put("file-in" , recFileTEST)
+    sinkDoneRenderObj .attr.put("file-out", renderFileTEST)
+    sinkRecFourier    .attr.put(Util.attrRecArtifact, recFileTEST)
+
+    // this is done by ScissProcs already:
+    // nuages.attr.put("generators", nuages.generators.getOrElse(throw new IllegalStateException()))
+
+    require (genNumChannels > 0)
+    val pPlaySinkRec = Util.mkLoop(nuages, "play-sink", numBufChans = genNumChannels, genNumChannels = genNumChannels)
+    sinkDoneRenderObj.attr.put("play-template", pPlaySinkRec)
+
+    val fscFourier = mkFScapeFourier[S]()
+    fscFourier.attr.put("in"  , recFileTEST)
+    fscFourier.attr.put("out" , renderFileTEST)
+    sinkDoneRenderObj.attr.put("fscape", fscFourier)
+
+    val sinkRecA = sinkRecFourier.attr
+    sinkRecA.put(Nuages.attrPrepare, sinkPrepObj)
+    sinkRecA.put(Nuages.attrDispose, sinkDoneRenderObj)
+  }
+
+  def mkFScapeFourier[S <: stm.Sys[S]]()(implicit tx: S#Tx): FScape[S] = {
+    import de.sciss.fscape.GE
+    import de.sciss.fscape.graph.{AudioFileIn => _, AudioFileOut => _, _}
+//    import de.sciss.fscape.lucre.graph.Ops._
+    import de.sciss.fscape.lucre.graph._
+    val f = FScape[S]()
+    import de.sciss.fscape.lucre.MacroImplicits._
+    f.setGraph {
+      val in0           = AudioFileIn("in")
+      val sr            = in0.sampleRate
+      val numFramesIn   = in0.numFrames
+      val fileType      = 0 // "out-type"    .attr(0)
+      val smpFmt        = 2 // "out-format"  .attr(2)
+//      val gainDb        = -0.2 // "gain-db"     .attr(0.0)
+//      val lenMode       = "len-mode"    .attr(0).clip()
+//      val dir           = 0 // "direction"   .attr(0).clip()
+      val dirFFT        = 1 // dir * -2 + (1: GE)  // bwd = -1, fwd = +1
+//      val numFramesOut  = (numFramesIn + lenMode).nextPowerOfTwo / (lenMode + (1: GE))
+      val numFramesOut  = numFramesIn.nextPowerOfTwo
+      val numFramesInT  = numFramesIn min numFramesOut
+//      val gainAmt       = gainDb.dbAmp
+
+      val inT           = in0.take(numFramesInT)
+      val inImag  = DC(0.0)
+      val inImagT = inImag.take(numFramesInT)
+      val inC = inT zip inImagT
+      val fft = Fourier(inC, size = numFramesInT,
+        padding = numFramesOut - numFramesInT, dir = dirFFT)
+
+      def mkProgress(x: GE, label: String) =
+        ProgressFrames(x, numFramesOut, label)
+
+      def normalize(x: GE): GE = {
+        val rsmpBuf   = BufferDisk(x)
+        val rMax      = RunningMax(Reduce.max(x.abs))
+        mkProgress(rMax, "analyze")
+        val maxAmp    = rMax.last
+        val div       = maxAmp + (maxAmp sig_== 0.0)
+        val gainAmtN  = 1.0 /*gainAmt*/ / div
+        rsmpBuf * gainAmtN
+      }
+
+      val re      = fft.complex.real
+      val outN    = normalize(re) * 60
+      val limLen  = 44100 * 1
+      val lim     = Limiter(outN, attack = limLen, release = limLen)
+      // XXX TODO --- why delay > limLen*2 ? (perhaps plus one or two control bufs?)
+//      val sigOut  = BufferMemory(outN, limLen * 2 + 8192) * lim
+      val sigOut  = BufferDisk(outN) * lim
+      val written = AudioFileOut("out", sigOut, fileType = fileType,
+        sampleFormat = smpFmt, sampleRate = sr)
+      mkProgress(written, "write")
+    }
+    f
+
+  }
+
+  def ctlRecDoneRender[S <: stm.Sys[S]](implicit tx: S#Tx): proc.Control[S] = {
+    val c = proc.Control[S]()
+    import de.sciss.lucre.expr.ExImport._
+    import de.sciss.lucre.expr.graph._
+    import de.sciss.synth.proc.ExImport._
+    c.setGraph {
+      val artIn   = Artifact("file-in")
+      val artOut  = Artifact("file-out")
+      val procOpt = "play-template" .attr[Obj]
+      val invOpt  = "invoker"       .attr[Obj]
+      val render  = Runner("fscape")
+
+      val ts      = TimeStamp()
+      val name    = ts.format("'fsc_'yyMMdd'_'HHmmss'.aif'")
+      val artNew  = artIn.replaceName(name)
+
+      val isDone  = render.state sig_== 4
+      val isFail  = render.state sig_== 5
+
+      val actRenderOpt = for {
+//        spec    <- specOpt
+        procTmp <- procOpt
+        invoker <- invOpt
+        gen     <- invoker.attr[Folder]("generators")
+      } yield {
+        val specOpt = AudioFileSpec.Read(artOut)
+        val spec  = specOpt.getOrElse(AudioFileSpec.Empty())
+        val cue   = AudioCue(artOut, spec)
+        val proc  = procTmp.copy
+        Act(
+          PrintLn("FScape rendering done!"),
+          proc.make,
+          proc.attr[AudioCue]("file").set(cue),
+          proc.attr[String]("name").set(artNew.base),
+          gen.append(proc),
+        )
+      }
+
+      isDone.toTrig ---> actRenderOpt.getOrElse {
+        PrintLn("Could not prepare play-proc! proc? " ++ procOpt.isDefined.toStr ++
+          ", invoker? " ++ invOpt.isDefined.toStr)
+      }
+
+      isFail.toTrig ---> PrintLn("FScape rendering failed!")
+
+      val actOpt  = Act(
+        PrintLn("File to render: " ++ artNew.path),
+        artOut.set(artNew),
+        render.run,
+      )
+
+      val actDone = actOpt
+//        .getOrElse {
+//        PrintLn("Could not create player! spec? " ++
+//          specOpt.isDefined.toStr ++
+//          ", proc? "   ++ procOpt.isDefined.toStr ++
+//          ", invoker? " ++ invOpt.isDefined.toStr)
+//      }
+
+      LoadBang() ---> Act(
+        PrintLn("File written: " ++ artIn.toStr),
+        actDone
+      )
+    }
+    c
   }
 }

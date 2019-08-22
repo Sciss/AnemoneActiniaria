@@ -24,13 +24,13 @@ object FifteenBeeThreeCee {
     import dsl._
 
     val masterChansOption = nCfg.masterChannels
-    val numChannels = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
+    val numChannels = if (sCfg.genNumChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.genNumChannels
 
     def default(in: Double): ControlValues =
-      if (sCfg.generatorChannels <= 0)
+      if (sCfg.genNumChannels <= 0)
         in
       else
-        Vector.fill(sCfg.generatorChannels)(in)
+        Vector.fill(sCfg.genNumChannels)(in)
 
     generator("anem-is-20-162") {
       import synth._

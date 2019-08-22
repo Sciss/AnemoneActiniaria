@@ -15,10 +15,10 @@ object Promenade {
 //    val numOut = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
 
     def default(in: Double): ControlValues =
-      if (sCfg.generatorChannels <= 0)
+      if (sCfg.genNumChannels <= 0)
         in
       else
-        Vector.fill(sCfg.generatorChannels)(in)
+        Vector.fill(sCfg.genNumChannels)(in)
 
 
     generator("prom-7") {

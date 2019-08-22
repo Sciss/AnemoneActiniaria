@@ -65,23 +65,23 @@ object Anemone {
   final val USE_OSC_LIGHTS = false // true -- for ZKM concert 2018
 
   final case class Config(
-                          masterChannels    : Range,
-                          masterGroups      : Vec[NamedBusConfig] = Vector.empty,
-                          soloChannels      : Range,
-                          micInputs         : Vec[NamedBusConfig],
-                          lineInputs        : Vec[NamedBusConfig],
-                          lineOutputs       : Vec[NamedBusConfig],
-                          generatorChannels : Int                 = 0,
-                          device            : Option[String]      = None,
-                          database          : Option[File]        = None,
-                          timeline          : Boolean             = true,
-                          tablet            : Boolean             = true
+                           masterChannels    : Range,
+                           masterGroups      : Vec[NamedBusConfig] = Vector.empty,
+                           soloChannels      : Range,
+                           micInputs         : Vec[NamedBusConfig],
+                           lineInputs        : Vec[NamedBusConfig],
+                           lineOutputs       : Vec[NamedBusConfig],
+                           genNumChannels    : Int                 = 0,
+                           device            : Option[String]      = None,
+                           database          : Option[File]        = None,
+                           timeline          : Boolean             = true,
+                           tablet            : Boolean             = true
   )
 
   lazy val Scarlett = Config(
     masterChannels    =  0 to 15,
     soloChannels      = 16 to 17,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -112,7 +112,7 @@ object Anemone {
   lazy val GrazAtelier: Config = Scarlett.copy(
     masterChannels  = 0 to 3,
     soloChannels    = 4 to 5,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -130,7 +130,7 @@ object Anemone {
   lazy val Forum = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -148,7 +148,7 @@ object Anemone {
   lazy val Minoriten = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -167,7 +167,7 @@ object Anemone {
   lazy val Imperfect = Config(
     masterChannels    = 0 until 24,
     soloChannels      = 24 to 25,
-    generatorChannels = 2, // 4,
+    genNumChannels = 2, // 4,
     micInputs         = Vector(
       NamedBusConfig("m-in" , 0 to 1),
       NamedBusConfig("m-out", 4 to 5)
@@ -194,7 +194,7 @@ object Anemone {
       NamedBusConfig("T", 8 to 11)
     ),
     soloChannels      = NoSolo, // 12 to 13,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -214,7 +214,7 @@ object Anemone {
   lazy val Cracks = Config(
     masterChannels    = 0 to 3,
     soloChannels      = (4 + 8) to (5 + 8),
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
     ),
     lineInputs      = Vector(
@@ -229,7 +229,7 @@ object Anemone {
   lazy val SeaM = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 8 until 8,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -247,7 +247,7 @@ object Anemone {
   lazy val CUBE = Config(
     masterChannels    = 0 to 11,
     soloChannels      = 12 until 12,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
 //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -266,7 +266,7 @@ object Anemone {
   lazy val Impuls = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
 //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -286,7 +286,7 @@ object Anemone {
   lazy val LAquila = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 8 to 9,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -306,7 +306,7 @@ object Anemone {
   lazy val Schwaermen = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -332,7 +332,7 @@ object Anemone {
       NamedBusConfig("T", 18 to 20)   // top
     ),
     soloChannels      = NoSolo,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
 //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -351,7 +351,7 @@ object Anemone {
   lazy val MuWa = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 0 until 0,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -369,7 +369,7 @@ object Anemone {
   lazy val AlmatMay2019 = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 0 until 0,
-    generatorChannels = 4,
+    genNumChannels = 4,
     micInputs         = Vector(
       //      NamedBusConfig("m-dpa", 0 to 1)
     ),
@@ -385,7 +385,25 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = MuWa
+  lazy val SegMod = Config(
+    masterChannels    = 0 to 7,
+    soloChannels      = 0 until 0,
+    genNumChannels = 4,
+    micInputs         = Vector(
+      //      NamedBusConfig("m-dpa", 0 to 1)
+    ),
+    lineInputs      = Vector(
+      NamedBusConfig("pirro", 0 to 3)
+    ),
+    lineOutputs     = Vector(
+      //      NamedBusConfig("sum", 24, 2)
+    ),
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true // false
+  )
+
+  private val config: Config = SegMod
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {
@@ -430,7 +448,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
   override protected def configure(sCfg: ScissProcs.ConfigBuilder, nCfg: Nuages.ConfigBuilder,
                                    aCfg: Server.ConfigBuilder): Unit = {
     super.configure(sCfg, nCfg, aCfg)
-    sCfg.generatorChannels  = config.generatorChannels
+    sCfg.genNumChannels  = config.genNumChannels
     // println(s"generatorChannels ${sCfg.generatorChannels}")
     nCfg.micInputs          = config.micInputs
     nCfg.lineInputs         = config.lineInputs

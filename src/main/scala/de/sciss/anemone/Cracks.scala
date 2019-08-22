@@ -187,10 +187,10 @@ object Cracks {
     import dsl._
 
     def default(in: Double): ControlValues =
-      if (sCfg.generatorChannels <= 0)
+      if (sCfg.genNumChannels <= 0)
         in
       else
-        Vector.fill(sCfg.generatorChannels)(in)
+        Vector.fill(sCfg.genNumChannels)(in)
 
     for (crackIdx <- 0 until 4) {
       val busXY = (nCfg.masterChannels.get.max + 1) + (crackIdx * 2)

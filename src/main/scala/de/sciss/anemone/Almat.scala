@@ -25,18 +25,18 @@ object Almat {
   def apply[S <: Sys[S]](dsl: DSL[S], sCfg: ScissProcs.Config, nConfig: Nuages.Config)
                             (implicit tx: S#Tx, n: Nuages[S]): Unit = {
     import dsl._
-    import sCfg.generatorChannels
+    import sCfg.genNumChannels
 
     def filterF   (name: String)(fun: GE => GE): Proc[S] =
-      filter      (name, if (DSL.useScanFixed) generatorChannels else -1)(fun)
+      filter      (name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
 
     def mkMix(df: Double = 0.0): GE = pAudio("mix", ParamSpec(0, 1), default(df))
 
     def default(in: Double): ControlValues =
-      if (generatorChannels <= 0)
+      if (genNumChannels <= 0)
         in
       else
-        Vector.fill(generatorChannels)(in)
+        Vector.fill(genNumChannels)(in)
 
     def mix(in: GE, flt: GE, mix: GE): GE = LinXFade2.ar(in, flt, mix * 2 - 1)
 

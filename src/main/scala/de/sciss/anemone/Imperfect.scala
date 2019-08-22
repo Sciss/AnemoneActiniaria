@@ -27,7 +27,7 @@ object Imperfect {
 
     val masterChansOption = nCfg.masterChannels
 
-    val numOut = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
+    val numOut = if (sCfg.genNumChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.genNumChannels
 
 //    def mkDetune(in: GE, max: Double = 2.0): GE = {
 //      require(max > 1)
@@ -37,10 +37,10 @@ object Imperfect {
 //    }
 
     def default(in: Double): ControlValues =
-      if (sCfg.generatorChannels <= 0)
+      if (sCfg.genNumChannels <= 0)
         in
       else
-        Vector.fill(sCfg.generatorChannels)(in)
+        Vector.fill(sCfg.genNumChannels)(in)
 
 //    generator("muta-quietsch") {
 //      import synth._
@@ -82,7 +82,7 @@ object Imperfect {
         }
 
         def collectorF(name: String)(fun: GE => Unit): Proc[S] =
-          collector(name, sCfg.generatorChannels)(fun)
+          collector(name, sCfg.genNumChannels)(fun)
 
 //        def placeChannels(sig: GE): GE = {
 //          import synth._

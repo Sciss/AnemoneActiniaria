@@ -47,14 +47,15 @@ object Populate {
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
     Promenade         (dsl, sConfig, nConfig)
     Almat             (dsl, sConfig, nConfig)
+    ShouldGens        (dsl, sConfig, nConfig)
 //    Imperfect         (dsl, sConfig, nConfig)
 //    Cracks            (dsl, sConfig, nConfig)
 
     def default(in: Double): ControlValues =
-      if (sConfig.generatorChannels <= 0)
+      if (sConfig.genNumChannels <= 0)
         in
       else
-        Vector.fill(sConfig.generatorChannels)(in)
+        Vector.fill(sConfig.genNumChannels)(in)
 
     // -------------- TALLINN --------------
 

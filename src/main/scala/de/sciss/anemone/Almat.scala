@@ -14,15 +14,15 @@
 package de.sciss.anemone
 
 import de.sciss.fscape.lucre.FScape
+import de.sciss.lucre.artifact.{ArtifactLocation => _ArtifactLocation}
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.Sys
 import de.sciss.nuages.{DSL, ExponentialWarp, IntWarp, Nuages, ParamSpec, ScissProcs, Util}
 import de.sciss.synth
+import de.sciss.synth.proc
 import de.sciss.synth.proc.MacroImplicits.ControlMacroOps
 import de.sciss.synth.proc.Proc
 import de.sciss.synth.ugen._
-import de.sciss.synth.proc
-import de.sciss.lucre.artifact.{Artifact => _Artifact, ArtifactLocation => _ArtifactLocation}
 
 object Almat {
   def any2stringadd: Any = ()
@@ -91,34 +91,22 @@ object Almat {
 
     val sinkPrepObj       = actions("rec-prepare")
     val sinkDoneRenderObj = actions("rec-done-render")
-    val recDirObj   = _ArtifactLocation.newConst[S](sConfig.recDir)
-
-    // XXX TODO --- while we cannot use expr.Artifact("value:sub"),
-    // let's just copy the artifact into all objects that use it.
-    // This works, because the attribute updater takes care of
-    // Artifact.Modifiable.
-    val recFileTEST     = _Artifact[S](recDirObj, _Artifact.Child("out.irc")) // .newConst[S](sConfig.recDir)
-    val renderFileTEST  = _Artifact[S](recDirObj, _Artifact.Child("render.aif")) // .newConst[S](sConfig.recDir)
-    sinkPrepObj       .attr.put(Util.attrRecDir     , recFileTEST)
-    sinkDoneRenderObj .attr.put("file-in" , recFileTEST)
-    sinkDoneRenderObj .attr.put("file-out", renderFileTEST)
-    sinkRecFourier    .attr.put(Util.attrRecArtifact, recFileTEST)
+    val recDirObj         = _ArtifactLocation.newConst[S](sConfig.recDir)
 
     // this is done by ScissProcs already:
     // nuages.attr.put("generators", nuages.generators.getOrElse(throw new IllegalStateException()))
 
     require (genNumChannels > 0)
-    val pPlaySinkRec = Util.mkLoop(nuages, "play-sink", numBufChans = genNumChannels, genNumChannels = genNumChannels)
+    val pPlaySinkRec = Util.mkLoop(nuages, "play-sink", numBufChannels = genNumChannels, genNumChannels = genNumChannels)
     sinkDoneRenderObj.attr.put("play-template", pPlaySinkRec)
 
     val fscFourier = mkFScapeFourier[S]()
-    fscFourier.attr.put("in"  , recFileTEST)
-    fscFourier.attr.put("out" , renderFileTEST)
     sinkDoneRenderObj.attr.put("fscape", fscFourier)
 
     val sinkRecA = sinkRecFourier.attr
     sinkRecA.put(Nuages.attrPrepare, sinkPrepObj)
     sinkRecA.put(Nuages.attrDispose, sinkDoneRenderObj)
+    sinkRecA.put(Util  .attrRecDir , recDirObj  )
   }
 
   def mkFScapeFourier[S <: stm.Sys[S]]()(implicit tx: S#Tx): FScape[S] = {
@@ -184,15 +172,15 @@ object Almat {
     import de.sciss.lucre.expr.graph._
     import de.sciss.synth.proc.ExImport._
     c.setGraph {
-      val artIn   = Artifact("file-in")
-      val artOut  = Artifact("file-out")
+      val artLoc   = ArtifactLocation("value:$rec-dir")
+      val artRec  = Artifact("value:$file")
       val procOpt = "play-template" .attr[Obj]
       val invOpt  = "invoker"       .attr[Obj]
       val render  = Runner("fscape")
 
       val ts      = TimeStamp()
       val name    = ts.format("'fsc_'yyMMdd'_'HHmmss'.aif'")
-      val artNew  = artIn.replaceName(name)
+      val artRender = artLoc / name
 
       val isDone  = render.state sig_== 4
       val isFail  = render.state sig_== 5
@@ -203,15 +191,15 @@ object Almat {
         invoker <- invOpt
         gen     <- invoker.attr[Folder]("generators")
       } yield {
-        val specOpt = AudioFileSpec.Read(artOut)
+        val specOpt = AudioFileSpec.Read(artRender)
         val spec  = specOpt.getOrElse(AudioFileSpec.Empty())
-        val cue   = AudioCue(artOut, spec)
+        val cue   = AudioCue(artRender, spec)
         val proc  = procTmp.copy
         Act(
           PrintLn("FScape rendering done!"),
           proc.make,
           proc.attr[AudioCue]("file").set(cue),
-          proc.attr[String]("name").set(artNew.base),
+          proc.attr[String]("name").set(artRender.base),
           gen.append(proc),
         )
       }
@@ -224,9 +212,12 @@ object Almat {
       isFail.toTrig ---> PrintLn("FScape rendering failed!")
 
       val actOpt  = Act(
-        PrintLn("File to render: " ++ artNew.path),
-        artOut.set(artNew),
-        render.run,
+        PrintLn("File to render: " ++ artRender.path),
+//        artRec.set(artRender),
+        render.runWith(
+          "in"  -> artRec,
+          "out" -> artRender,
+        ),
       )
 
       val actDone = actOpt
@@ -238,7 +229,7 @@ object Almat {
 //      }
 
       LoadBang() ---> Act(
-        PrintLn("File written: " ++ artIn.toStr),
+        PrintLn("File written: " ++ artRec.toStr),
         actDone
       )
     }

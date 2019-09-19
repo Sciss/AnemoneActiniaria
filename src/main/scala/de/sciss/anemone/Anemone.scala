@@ -387,9 +387,9 @@ object Anemone {
   )
 
   lazy val SegMod = Config(
-    masterChannels    = 0 to 7,
-    soloChannels      = 0 until 0,
-    genNumChannels = 4,
+    masterChannels    = 0 to 3,
+    soloChannels      = 6 to 7,
+    genNumChannels    = 4,
     micInputs         = Vector(
       //      NamedBusConfig("m-dpa", 0 to 1)
     ),

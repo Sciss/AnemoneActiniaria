@@ -19,7 +19,6 @@ import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.lucre.stm.{Disposable, TxnLike}
 import de.sciss.lucre.synth.{AudioBus, Synth, Sys, Txn}
-import de.sciss.nuages.impl.{NuagesObjImpl, NuagesOutputImpl}
 import de.sciss.nuages.{NuagesAttribute, NuagesObj, NuagesParam, NuagesShapeRenderer, NuagesView}
 import de.sciss.synth.proc.Proc
 import prefuse.Visualization
@@ -40,36 +39,25 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
   def synth(implicit tx: TxnLike): Option[Synth] = synthRef()
   def synth_=(value: Option[Synth])(implicit tx: TxnLike): Unit = synthRef() = value
 
-  private def nodePressed(data: NuagesObj[S])(implicit tx: S#Tx): Unit = data match {
-    case impl: NuagesObjImpl[S] =>
-      impl.getOutput(Proc.mainOut) match {
-        case Some(out: NuagesOutputImpl[S]) =>
-          out.meterOption match {
-            case Some(m: NuagesOutputImpl.Meter) =>
-              // println(s"BUS = ${m.bus.busOption}")
-              val now     = m.bus
-              val before  = busRef.swap(Some(now))
-              // println("HA")
-              if (!before.contains(now)) {
-                // println(s"NEW BUS $now")
-                synth.foreach { syn =>
-                  busSetter().dispose()
-                  // println(s"BUS $now")
-                  val reader = syn.read(now -> "in")
-                  busSetter() = reader
-                }
-              }
-
-            case _ =>
-            // println("NOPE 3")
-          }
-
-        case _ =>
-        // println("NOPE 2")
+  private def nodePressed(data: NuagesObj[S])(implicit tx: S#Tx): Unit =
+    for {
+      out <- data.getOutput(Proc.mainOut)
+      m   <- out.meterOption
+    } {
+      // println(s"BUS = ${m.bus.busOption}")
+      val now     = m.bus
+      val before  = busRef.swap(Some(now))
+      // println("HA")
+      if (!before.contains(now)) {
+        // println(s"NEW BUS $now")
+        synth.foreach { syn =>
+          busSetter().dispose()
+          // println(s"BUS $now")
+          val reader = syn.read(now -> "in")
+          busSetter() = reader
+        }
       }
-
-    case _ =>
-  }
+    }
 
   override def itemEntered(vi: VisualItem, e: MouseEvent): Unit = superChecker(vi)
 

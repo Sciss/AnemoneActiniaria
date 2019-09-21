@@ -397,7 +397,7 @@ object Anemone {
       NamedBusConfig("pirro", 0 to 3)
     ),
     lineOutputs     = Vector(
-      //      NamedBusConfig("sum", 24, 2)
+      NamedBusConfig("sum", 6 to 7)
     ),
     device    = Some("Wolkenpumpe"),
     database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),

@@ -5,20 +5,20 @@ lazy val commonSettings = Seq(
   scalaVersion       := "2.12.10",
   licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt")),
   homepage           := Some(url(s"https://github.com/Sciss/${name.value}")),
-  resolvers          += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
+//  resolvers          += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
   scalacOptions     ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint:-stars-align,_"),
   scalacOptions      += "-Yrangepos",  // this is needed to extract source code
   updateOptions      := updateOptions.value.withLatestSnapshots(false)
 )
 
 lazy val deps = new {
-  val fscape          = "2.30.0"
-  val lucre           = "3.15.1"
-  val negatum         = "0.9.0"
-  val soundProcesses  = "3.32.1"
-  val submin          = "0.2.5"
-  val ugen            = "1.19.5"
-  val wolkenpumpe     = "2.37.0"
+  val fscape          = "2.33.2"
+  val lucre           = "3.16.1"
+  val negatum         = "0.12.0"
+  val soundProcesses  = "3.33.0"
+  val submin          = "0.3.4"
+  val ugen            = "1.19.6"
+  val wolkenpumpe     = "2.38.0"
 }
 
 lazy val mainCl = "de.sciss.anemone.Anemone"

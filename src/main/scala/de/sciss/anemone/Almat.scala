@@ -2,7 +2,7 @@
  *  Almat.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2019 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -204,7 +204,7 @@ object Almat {
         )
       }
 
-      isDone.toTrig ---> actRenderOpt.getOrElse {
+      isDone.toTrig ---> actRenderOpt.orElse {
         PrintLn("Could not prepare play-proc! proc? " ++ procOpt.isDefined.toStr ++
           ", invoker? " ++ invOpt.isDefined.toStr)
       }

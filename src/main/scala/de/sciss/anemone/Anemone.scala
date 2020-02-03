@@ -2,7 +2,7 @@
  *  Anemone.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2019 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -79,7 +79,7 @@ object Anemone {
                            tablet            : Boolean             = true
   )
 
-  lazy val Scarlett = Config(
+  lazy val Scarlett: Config = Config(
     masterChannels    =  0 to 15,
     soloChannels      = 16 to 17,
     genNumChannels = 4,
@@ -128,7 +128,7 @@ object Anemone {
     database  = Some(mkDatabase(userHome/"Music"/"renibday"/"sessions"))
   )
 
-  lazy val Forum = Config(
+  lazy val Forum: Config = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
     genNumChannels = 4,
@@ -146,7 +146,7 @@ object Anemone {
     database  = None // Some(mkDatabase(userHome/"Documents"/"applications"/"150131_ZKM"/"sessions"))
   )
 
-  lazy val Minoriten = Config(
+  lazy val Minoriten: Config = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
     genNumChannels = 4,
@@ -165,7 +165,7 @@ object Anemone {
     timeline  = false
   )
 
-  lazy val Imperfect = Config(
+  lazy val Imperfect: Config = Config(
     masterChannels    = 0 until 24,
     soloChannels      = 24 to 25,
     genNumChannels = 2, // 4,
@@ -187,7 +187,7 @@ object Anemone {
 
   val NoSolo: Range = 0 until 0
 
-  lazy val BEAST = Config(
+  lazy val BEAST: Config = Config(
     masterChannels    = 0 until 12,
     masterGroups      = Vector(
       NamedBusConfig("B", 0 to 3),
@@ -212,7 +212,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val Cracks = Config(
+  lazy val Cracks: Config = Config(
     masterChannels    = 0 to 3,
     soloChannels      = (4 + 8) to (5 + 8),
     genNumChannels = 4,
@@ -227,7 +227,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val SeaM = Config(
+  lazy val SeaM: Config = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 8 until 8,
     genNumChannels = 4,
@@ -245,7 +245,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val CUBE = Config(
+  lazy val CUBE: Config = Config(
     masterChannels    = 0 to 11,
     soloChannels      = 12 until 12,
     genNumChannels = 4,
@@ -264,7 +264,7 @@ object Anemone {
     timeline  = true  // false
   )
 
-  lazy val Impuls = Config(
+  lazy val Impuls: Config = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
     genNumChannels = 4,
@@ -284,7 +284,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val LAquila = Config(
+  lazy val LAquila: Config = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 8 to 9,
     genNumChannels = 4,
@@ -304,7 +304,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val Schwaermen = Config(
+  lazy val Schwaermen: Config = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 4 to 5,
     genNumChannels = 4,
@@ -324,7 +324,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val ZKM_Kubus = Config(
+  lazy val ZKM_Kubus: Config = Config(
     masterChannels    = 0 until 21,
     masterGroups      = Vector(
       NamedBusConfig("B",  0 to  6),  // bottom
@@ -349,7 +349,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val MuWa = Config(
+  lazy val MuWa: Config = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 0 until 0,
     genNumChannels = 4,
@@ -367,7 +367,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val AlmatMay2019 = Config(
+  lazy val AlmatMay2019: Config = Config(
     masterChannels    = 0 to 7,
     soloChannels      = 0 until 0,
     genNumChannels = 4,
@@ -386,7 +386,7 @@ object Anemone {
     timeline  = true // false
   )
 
-  lazy val SegMod = Config(
+  lazy val SegMod: Config = Config(
     masterChannels    = 0 to 3,
     soloChannels      = 6 to 7,
     genNumChannels    = 4,

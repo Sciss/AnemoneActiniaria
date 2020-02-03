@@ -6,7 +6,7 @@ This project contains my personal set-up for the algorithmic live improvisation 
 It is an extension of [Wolkenpumpe](https://git.iem.at/sciss/Wolkenpumpe).
 
 All code here
-is (C)opyright 2014&ndash;2019 by Hanns Holger Rutz. All rights reserved. This project is released under the
+is (C)opyright 2014&ndash;2020 by Hanns Holger Rutz. All rights reserved. This project is released under the
 [GNU General Public License](https://git.iem.at/sciss/AnemoneActiniaria/raw/master/LICENSE) v3+ and comes with absolutely no warranties.
 To contact the author, send an email to `contact at sciss.de`.
 

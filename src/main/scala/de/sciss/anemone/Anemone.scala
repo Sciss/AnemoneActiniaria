@@ -404,7 +404,21 @@ object Anemone {
     timeline  = true // false
   )
 
-  private val config: Config = SegMod
+  lazy val Madeira: Config = Config(
+    masterChannels    = 0 until 2,
+    soloChannels      = 0 until 0,
+    genNumChannels    = 2,
+    micInputs         = Vector(
+      NamedBusConfig("m-om1", 0 until 1)
+    ),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true
+  )
+
+  private val config: Config = Madeira
 
   def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
     if (config.timeline) {

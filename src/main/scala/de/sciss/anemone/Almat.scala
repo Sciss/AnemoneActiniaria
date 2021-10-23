@@ -2,7 +2,7 @@
  *  Almat.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,33 +13,32 @@
 
 package de.sciss.anemone
 
-import de.sciss.fscape.lucre.FScape
-import de.sciss.lucre.artifact.{ArtifactLocation => _ArtifactLocation}
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{DSL, ExponentialWarp, IntWarp, Nuages, ParamSpec, ScissProcs, Util}
-import de.sciss.synth
-import de.sciss.synth.proc
-import de.sciss.synth.proc.MacroImplicits.ControlMacroOps
-import de.sciss.synth.proc.Proc
+import de.sciss.fscape.lucre.MacroImplicits.FScapeMacroOps
+import de.sciss.lucre.synth.Txn
+import de.sciss.lucre.{ArtifactLocation => _ArtifactLocation, Obj => LObj}
+import de.sciss.nuages.{DSL, Nuages, ScissProcs, Util}
+import de.sciss.proc.MacroImplicits.ControlMacroOps
+import de.sciss.proc.{FScape, ParamSpec, Proc, Warp}
+import de.sciss.{proc, synth}
 import de.sciss.synth.ugen._
 
 object Almat {
   def any2stringadd: Any = ()
 
-  def mkActions[S <: Sys[S]]()(implicit tx: S#Tx): Map[String, stm.Obj[S]] = {
-    val recPrepare    = ScissProcs.actionRecPrepare[S]
-    val recDoneRender = ctlRecDoneRender[S]
+  def mkActions[T <: Txn[T]]()(implicit tx: T): Map[String, LObj[T]] = {
+    val recPrepare    = ScissProcs.actionRecPrepare[T]
+    val recDoneRender = ctlRecDoneRender[T]
     Map("rec-prepare" -> recPrepare, "rec-done-render" -> recDoneRender)
   }
 
-  def apply[S <: Sys[S]](dsl: DSL[S], sConfig: ScissProcs.Config, nConfig: Nuages.Config)
-                        (implicit tx: S#Tx, nuages: Nuages[S]): Unit = {
+  def apply[T <: Txn[T]](dsl: DSL[T], sConfig: ScissProcs.Config, nConfig: Nuages.Config)
+                        (implicit tx: T, nuages: Nuages[T]): Unit = {
+    import de.sciss.synth.Import._
     import dsl._
     import sConfig.genNumChannels
     import synth.GE
 
-    def filterF   (name: String)(fun: GE => GE): Proc[S] =
+    def filterF   (name: String)(fun: GE => GE): Proc[T] =
       filter      (name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
 
     def mkMix(df: Double = 0.0): GE = pAudio("mix", ParamSpec(0, 1), default(df))
@@ -50,12 +49,14 @@ object Almat {
       else
         Vector.fill(genNumChannels)(in)
 
-    def mix(in: GE, flt: GE, mix: GE): GE = LinXFade2.ar(in, flt, mix * 2 - 1)
+    def mix(in: GE, flt: GE, mix: GE): GE = {
+      LinXFade2.ar(in, flt, mix * 2 - 1)
+    }
 
     filterF("hopf") { in =>
-      val pCoupling = pAudio("coup" , ParamSpec(0.0005, 0.05, ExponentialWarp), default(0.0005))
+      val pCoupling = pAudio("coup" , ParamSpec(0.0005, 0.05, Warp.Exponential), default(0.0005))
       val pRadius   = pAudio("rad"  , ParamSpec(0.0, 1.0), default(1.0))
-      val pSelect   = pAudio("sel"  , ParamSpec(0.0, 3.0, IntWarp), default(0.0))
+      val pSelect   = pAudio("sel"  , ParamSpec(0.0, 3.0, Warp.Int), default(0.0))
       val pMix      = mkMix()
       val hopf      = Hopf.ar(in, coupling = pCoupling, radius = pRadius)
       val phase     = hopf.phase / math.Pi
@@ -70,28 +71,29 @@ object Almat {
 
     /////////////////////////////////////////
 
-    val mapActions = mkActions[S]()
-    applyWithActions[S](dsl, sConfig, nConfig, mapActions)
+    val mapActions = mkActions[T]()
+    applyWithActions[T](dsl, sConfig, nConfig, mapActions)
   }
 
-  def applyWithActions[S <: Sys[S]](dsl: DSL[S], sConfig: ScissProcs.Config, nConfig: Nuages.Config,
-                                    actions: Map[String, stm.Obj[S]])
-                                   (implicit tx: S#Tx, nuages: Nuages[S]): Unit = {
+  def applyWithActions[T <: Txn[T]](dsl: DSL[T], sConfig: ScissProcs.Config, nConfig: Nuages.Config,
+                                    actions: Map[String, LObj[T]])
+                                   (implicit tx: T, nuages: Nuages[T]): Unit = {
     import dsl._
     import sConfig.genNumChannels
     import synth.GE
 
-    def sinkF     (name: String)(fun: GE => Unit): proc.Proc[S] =
+    def sinkF     (name: String)(fun: GE => Unit): Proc[T] =
       sink        (name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
 
     val sinkRecFourier = sinkF("rec-fourier") { in =>
-      val disk = proc.graph.DiskOut.ar(Util.attrRecArtifact, in)
+      import de.sciss.synth.Import._
+      val disk = synth.proc.graph.DiskOut.ar(Util.attrRecArtifact, in)
       disk.poll(0, "disk")
     }
 
     val sinkPrepObj       = actions("rec-prepare")
     val sinkDoneRenderObj = actions("rec-done-render")
-    val recDirObj         = _ArtifactLocation.newConst[S](sConfig.recDir)
+    val recDirObj         = _ArtifactLocation.newConst[T](sConfig.recDir.toURI)
 
     // this is done by ScissProcs already:
     // nuages.attr.put("generators", nuages.generators.getOrElse(throw new IllegalStateException()))
@@ -100,7 +102,7 @@ object Almat {
     val pPlaySinkRec = Util.mkLoop(nuages, "play-sink", numBufChannels = genNumChannels, genNumChannels = genNumChannels)
     sinkDoneRenderObj.attr.put("play-template", pPlaySinkRec)
 
-    val fscFourier = mkFScapeFourier[S]()
+    val fscFourier = mkFScapeFourier[T]()
     sinkDoneRenderObj.attr.put("fscape", fscFourier)
 
     val sinkRecA = sinkRecFourier.attr
@@ -109,13 +111,13 @@ object Almat {
     sinkRecA.put(Util  .attrRecDir , recDirObj  )
   }
 
-  def mkFScapeFourier[S <: stm.Sys[S]]()(implicit tx: S#Tx): FScape[S] = {
+  def mkFScapeFourier[T <: Txn[T]]()(implicit tx: T): FScape[T] = {
     import de.sciss.fscape.GE
+    import de.sciss.fscape.Ops._
     import de.sciss.fscape.graph.{AudioFileIn => _, AudioFileOut => _, _}
 //    import de.sciss.fscape.lucre.graph.Ops._
     import de.sciss.fscape.lucre.graph._
-    val f = FScape[S]()
-    import de.sciss.fscape.lucre.MacroImplicits._
+    val f = FScape[T]()
     f.setGraph {
       val in0           = AudioFileIn("in")
       val sr            = in0.sampleRate
@@ -166,13 +168,13 @@ object Almat {
 
   }
 
-  def ctlRecDoneRender[S <: stm.Sys[S]](implicit tx: S#Tx): proc.Control[S] = {
-    val c = proc.Control[S]()
-    import de.sciss.lucre.expr.ExImport._
+  def ctlRecDoneRender[T <: Txn[T]](implicit tx: T): proc.Control[T] = {
+    val c = proc.Control[T]()
+//    import de.sciss.lucre.expr.ExImport._
     import de.sciss.lucre.expr.graph._
-    import de.sciss.synth.proc.ExImport._
+    import de.sciss.proc.ExImport._
     c.setGraph {
-      val artLoc   = ArtifactLocation("value:$rec-dir")
+      val artLoc  = ArtifactLocation("value:$rec-dir")
       val artRec  = Artifact("value:$file")
       val procOpt = "play-template" .attr[Obj]
       val invOpt  = "invoker"       .attr[Obj]
@@ -204,12 +206,12 @@ object Almat {
         )
       }
 
-      isDone.toTrig ---> actRenderOpt.orElse {
+      isDone.toTrig --> actRenderOpt.orElse {
         PrintLn("Could not prepare play-proc! proc? " ++ procOpt.isDefined.toStr ++
           ", invoker? " ++ invOpt.isDefined.toStr)
       }
 
-      isFail.toTrig ---> PrintLn("FScape rendering failed!")
+      isFail.toTrig --> PrintLn("FScape rendering failed!")
 
       val actOpt  = Act(
         PrintLn("File to render: " ++ artRender.path),
@@ -228,7 +230,7 @@ object Almat {
 //          ", invoker? " ++ invOpt.isDefined.toStr)
 //      }
 
-      LoadBang() ---> Act(
+      LoadBang() --> Act(
         PrintLn("File written: " ++ artRec.toStr),
         actDone
       )

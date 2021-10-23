@@ -2,7 +2,7 @@
  *  Mutagens.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,24 +13,25 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{ExpWarp, IntWarp, LinWarp, Nuages, ParamSpec, ScissProcs, Util}
+import de.sciss.lucre.synth.Txn
+import de.sciss.nuages.{Nuages, ScissProcs, Util}
+import de.sciss.proc.{ParamSpec, Warp}
 import de.sciss.synth.GE
 import de.sciss.synth.ugen.ControlValues
 import de.sciss.{nuages, synth}
 
 object Mutagens {
-  def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
-                        (implicit tx: S#Tx, n: Nuages[S]): Unit = {
+  def apply[T <: Txn[T]](dsl: nuages.DSL[T], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
+                        (implicit tx: T, n: Nuages[T]): Unit = {
     import dsl._
 
-    val masterChansOption = nCfg.masterChannels
+    val masterChansOption = nCfg.mainChannels
 
     val numOut = if (sCfg.genNumChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.genNumChannels
 
     def mkDetune(in: GE, max: Double = 2.0): GE = {
+      import de.sciss.synth.Import._
       require(max > 1)
-      import synth._
       val det = pAudio("detune" , ParamSpec(1.0, 2.0), default(1.0))
       //      Vec.tabulate(numOut) { ch =>
       //        val m = (ch: GE).linlin(0, (numOut - 1).max(1), 1, det)
@@ -48,10 +49,11 @@ object Mutagens {
     generator("muta-quietsch") {
       import synth._
       import ugen._
-      val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, ExpWarp), default(0.014))
-      val v14a  = 6286.0566 // pAudio("p2"     , ParamSpec(10, 10000, ExpWarp), default = 6286.0566)
-      val v24   = pAudio("p3"    , ParamSpec(-0.0005, -5.0, ExpWarp), default(-1.699198))
-      val amp   = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      import Import._
+      val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, Warp.Exp), default(0.014))
+      val v14a  = 6286.0566 // pAudio("p2"     , ParamSpec(10, 10000, Warp.Exp), default = 6286.0566)
+      val v24   = pAudio("p3"    , ParamSpec(-0.0005, -5.0, Warp.Exp), default(-1.699198))
+      val amp   = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
       val det   = pAudio("detune" , ParamSpec(1, 2), default(1))
 
 //      val numOut  = if (sCfg.generatorChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.generatorChannels
@@ -73,11 +75,12 @@ object Mutagens {
     generator("muta-boing") {  // c5f81c53
       import synth._
       import ugen._
-      val v0a   = pAudio("p1"     , ParamSpec(  0.0015,    0.15  , ExpWarp), default(   0.014171208))
-      val v1    = pAudio("p2"     , ParamSpec( 12     , 2586.9963, ExpWarp), default(2586.9963     ))
+      import Import._
+      val v0a   = pAudio("p1"     , ParamSpec(  0.0015,    0.15  , Warp.Exp), default(   0.014171208))
+      val v1    = pAudio("p2"     , ParamSpec( 12     , 2586.9963, Warp.Exp), default(2586.9963     ))
       val v2    = 42.465885
-      val v3    = pAudio("p3"     , ParamSpec(-0.1    ,    0.0   , LinWarp), default(  -0.029823383))
-      val amp   = pAudio("amp"    , ParamSpec( 0.01   ,    1     , ExpWarp), default(   0.1        ))
+      val v3    = pAudio("p3"     , ParamSpec(-0.1    ,    0.0   , Warp.Int), default(  -0.029823383))
+      val amp   = pAudio("amp"    , ParamSpec( 0.01   ,    1     , Warp.Exp), default(   0.1        ))
 
       val v5  = 0.00444841
       val v0 = mkDetune(v0a)
@@ -100,10 +103,11 @@ object Mutagens {
     generator("muta-wicket") {  // 7c89d6f8
       import synth._
       import ugen._
-      val v1a   = pAudio("p1"   , ParamSpec( 2   , 1000  , ExpWarp), default(  42.465885  ))
-      val amp   = pAudio("amp"  , ParamSpec( 0.01,    1  , ExpWarp), default(   0.1       ))
-      val v2    = pAudio("rhy"  , ParamSpec( 1   , 1000  , ExpWarp), default(   1.0962135 ))
-      val v7    = pAudio("hpf"  , ParamSpec( 0.02, 1000  , ExpWarp), default(  0.023961771))
+      import Import._
+      val v1a   = pAudio("p1"   , ParamSpec( 2   , 1000  , Warp.Exp), default(  42.465885  ))
+      val amp   = pAudio("amp"  , ParamSpec( 0.01,    1  , Warp.Exp), default(   0.1       ))
+      val v2    = pAudio("rhy"  , ParamSpec( 1   , 1000  , Warp.Exp), default(   1.0962135 ))
+      val v7    = pAudio("hpf"  , ParamSpec( 0.02, 1000  , Warp.Exp), default(  0.023961771))
 
       val v1  = mkDetune(v1a)
       val v3  = FSinOsc.ar(v2, v1)
@@ -119,15 +123,16 @@ object Mutagens {
     generator("muta-gas") { // ca0e2d3f
       import synth._
       import ugen._
-      val v0  = pAudio("p1"  , ParamSpec(   20    , 10000  , ExpWarp), default(  2043.3861     ))
-      val v1  = pAudio("p2"  , ParamSpec(    4    ,   400  , ExpWarp), default(    40.62856    ))
-      val v2  = pAudio("p3"  , ParamSpec(   60    , 10000  , ExpWarp), default(  6911.0312     ))
-      val v4  = pAudio("p4"  , ParamSpec(    0.001,     1.0, ExpWarp), default(     0.011513037))
-      val v8  = pAudio("p5"  , ParamSpec(   10    , 11025  , ExpWarp), default( 10078.403      ))
-      val v13 = pAudio("p6"  , ParamSpec( -800    ,   800  , LinWarp), default(  -415.97122    ))
-      val v26 = pAudio("p7"  , ParamSpec(    0.002,     2.0, ExpWarp), default(     0.02286103 ))
-      val v32a= pAudio("tr"  , ParamSpec(   -1    ,     1  , IntWarp), default(     1          ))
-      val amp = pAudio("amp" , ParamSpec(    0.01 ,     1.0, ExpWarp), default(     0.1        ))
+      import Import._
+      val v0  = pAudio("p1"  , ParamSpec(   20    , 10000  , Warp.Exp), default(  2043.3861     ))
+      val v1  = pAudio("p2"  , ParamSpec(    4    ,   400  , Warp.Exp), default(    40.62856    ))
+      val v2  = pAudio("p3"  , ParamSpec(   60    , 10000  , Warp.Exp), default(  6911.0312     ))
+      val v4  = pAudio("p4"  , ParamSpec(    0.001,     1.0, Warp.Exp), default(     0.011513037))
+      val v8  = pAudio("p5"  , ParamSpec(   10    , 11025  , Warp.Exp), default( 10078.403      ))
+      val v13 = pAudio("p6"  , ParamSpec( -800    ,   800  , Warp.Lin), default(  -415.97122    ))
+      val v26 = pAudio("p7"  , ParamSpec(    0.002,     2.0, Warp.Exp), default(     0.02286103 ))
+      val v32a= pAudio("tr"  , ParamSpec(   -1    ,     1  , Warp.Int), default(     1          ))
+      val amp = pAudio("amp" , ParamSpec(    0.01 ,     1.0, Warp.Exp), default(     0.1        ))
       val v5  = Ringz.ar(v4, v1, v2)
       val v6  = HPF.ar(v5, v1)
       val v10 = LFCub.ar(v8, v2)
@@ -149,13 +154,14 @@ object Mutagens {
     generator("muta-towtow") {
       import synth._
       import ugen._
-      val amp = pAudio("amp" , ParamSpec(    0.01,     1.0, ExpWarp), default(   0.1         ))
-      val v4  = pAudio("p1"  , ParamSpec(-2000    , 2000  , LinWarp), default( -415.97122    ))
-      val v10 = pAudio("p2"  , ParamSpec(    0.1  , 4000  , ExpWarp), default(   40.62856    ))
-      val v27 = pAudio("p3"  , ParamSpec(    0.001,    1.0, ExpWarp), default(    0.011513037))
-      val v17 = pAudio("p4"  , ParamSpec(    0.1  ,  100  , ExpWarp), default(    9.211388   ))
-      val v73 = pAudio("p5"  , ParamSpec(-2000    ,  800  , LinWarp), default( -415.97122    ))
-      val v74 = pAudio("p6"  , ParamSpec(    0.1  , 4000  , ExpWarp), default(   42.465885   ))
+      import Import._
+      val amp = pAudio("amp" , ParamSpec(    0.01,     1.0, Warp.Exp), default(   0.1         ))
+      val v4  = pAudio("p1"  , ParamSpec(-2000    , 2000  , Warp.Lin), default( -415.97122    ))
+      val v10 = pAudio("p2"  , ParamSpec(    0.1  , 4000  , Warp.Exp), default(   40.62856    ))
+      val v27 = pAudio("p3"  , ParamSpec(    0.001,    1.0, Warp.Exp), default(    0.011513037))
+      val v17 = pAudio("p4"  , ParamSpec(    0.1  ,  100  , Warp.Exp), default(    9.211388   ))
+      val v73 = pAudio("p5"  , ParamSpec(-2000    ,  800  , Warp.Lin), default( -415.97122    ))
+      val v74 = pAudio("p6"  , ParamSpec(    0.1  , 4000  , Warp.Exp), default(   42.465885   ))
       val v0a = 500.0
       val v0 = LFDNoise0.ar(Seq.fill(numOut)(v0a))
       val v1 = 44.494984

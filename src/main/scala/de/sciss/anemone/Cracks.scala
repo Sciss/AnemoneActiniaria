@@ -2,7 +2,7 @@
  *  Cracks.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,20 +13,18 @@
 
 package de.sciss.anemone
 
-import java.net.{InetAddress, InetSocketAddress, SocketAddress}
-
+import de.sciss.audiofile.AudioFile
 import de.sciss.file._
-import de.sciss.lucre.stm.Sys
-import de.sciss.lucre.synth.{Node, Server, Synth, Txn, Sys => SSys}
-import de.sciss.nuages.{DbFaderWarp, ExponentialWarp, Nuages, NuagesView, ParamSpec, ScissProcs}
+import de.sciss.lucre.synth.{RT, Server, Synth, Txn}
+import de.sciss.nuages.{Nuages, NuagesView, ScissProcs}
+import de.sciss.proc.{AudioCue, ParamSpec, Warp}
 import de.sciss.synth.UGenSource.Vec
-import de.sciss.synth.io.AudioFile
-import de.sciss.synth.proc.AudioCue
 import de.sciss.synth.proc.graph.impl.SendReplyResponder
 import de.sciss.synth.ugen.ControlValues
 import de.sciss.synth.{SynthGraph, addAfter}
 import de.sciss.{nuages, osc}
 
+import java.net.{InetAddress, InetSocketAddress, SocketAddress}
 import scala.swing.event.SelectionChanged
 import scala.swing.{BoxPanel, ComboBox, Label, Orientation}
 import scala.util.control.NonFatal
@@ -45,9 +43,9 @@ object Cracks {
 
   val raspiPort: Int = 57120
 
-  private[this] val raspiSockets: Array[SocketAddress] = raspiIPs.map { ip =>
+  private[this] val raspiSockets: Array[SocketAddress] = raspiIPs.iterator.map { ip =>
     new InetSocketAddress(ip, raspiPort)
-  } (collection.breakOut)
+  } .toArray
 
   private[this] val raspiT: osc.UDP.Transmitter.Undirected = {
     val config = osc.UDP.Config()
@@ -57,12 +55,12 @@ object Cracks {
     t
   }
 
-  private final class CrackResponder(protected val synth: Node)
+  private final class CrackResponder(protected val synth: Synth)
     extends SendReplyResponder {
 
     private[this] val NodeID = synth.peer.id
 
-    protected def added()(implicit tx: Txn): Unit = ()
+    protected def added()(implicit tx: RT): Unit = ()
 
     private[this] val data = new Array[Int](8)
 
@@ -129,7 +127,7 @@ object Cracks {
     }
   }
 
-  def mkComponent[S <: SSys[S]](view: NuagesView[S]): Unit = {
+  def mkComponent[T <: Txn[T]](view: NuagesView[T]): Unit = {
     val gadgets = (0 until 4).flatMap { ch =>
       val lb = new Label(s"${ch+1}:")
       val ggCombo = new ComboBox(Seq("0 - init", "1 - in", "2 - trace", "3 - remove", "4 - out")) {
@@ -158,7 +156,7 @@ object Cracks {
     view.addSouthComponent(pane)
   }
 
-  def initOSC(busXYOff: Int, s: Server)(implicit tx: Txn): Unit = {
+  def initOSC(busXYOff: Int, s: Server)(implicit tx: RT): Unit = {
     val g = SynthGraph {
       import de.sciss.synth._
       import ugen._
@@ -182,8 +180,9 @@ object Cracks {
   final val raspiWidth : Int = 1024
   final val raspiHeight: Int = 1024
 
-  def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
-                        (implicit tx: S#Tx, n: Nuages[S]): Unit = {
+  def apply[T <: Txn[T]](dsl: nuages.DSL[T], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
+                        (implicit tx: T, n: Nuages[T]): Unit = {
+    import de.sciss.synth.Import._
     import dsl._
 
     def default(in: Double): ControlValues =
@@ -193,12 +192,12 @@ object Cracks {
         Vector.fill(sCfg.genNumChannels)(in)
 
     for (crackIdx <- 0 until 4) {
-      val busXY = (nCfg.masterChannels.get.max + 1) + (crackIdx * 2)
+      val busXY = (nCfg.mainChannels.get.max + 1) + (crackIdx * 2)
 
       val pCracks1 = generator(s"cra-${crackIdx + 1}") {
         import de.sciss.synth.proc.graph._
         import de.sciss.synth.ugen._
-        import de.sciss.synth.{Buffer => _, _}
+        import de.sciss.synth.{Buffer => _}
 
         val b      = Buffer("buf")
 
@@ -220,7 +219,7 @@ object Cracks {
 //        val rx    = rx0 * width
 //        val ry    = ry0 * height
 
-        val freq0 = pAudio("freq", ParamSpec(0.001, 10000.0, ExponentialWarp), default(0.5))
+        val freq0 = pAudio("freq", ParamSpec(0.001, 10000.0, Warp.Exp), default(0.5))
         val freq  = freq0 // .linexp(0, 1, 0.001, 10000)
 
         val twopi = math.Pi * 2
@@ -248,19 +247,19 @@ object Cracks {
       val cueName1 = s"cracks-${crackIdx + 1}.aif"
       val art1    = baseDir / cueName1
       val spec1   = AudioFile.readSpec(art1)
-      val cue1    = AudioCue.Obj.newConst[S](AudioCue(art1, spec1, offset = 0L, gain = 1.0))
+      val cue1    = AudioCue.Obj.newConst[T](AudioCue(art1.toURI, spec1, offset = 0L, gain = 1.0))
 
       pCracks1.attr.put("buf", cue1)
     }
 
-    nCfg.masterChannels.foreach { chans =>
+    nCfg.mainChannels.foreach { chans =>
       chans.zipWithIndex.foreach { case (idx, ch) =>
         collector(s"O-cr${idx+1}") { in =>
           import de.sciss.synth._
           import ugen._
 
           def mkAmp(): GE = {
-            val db0 = pAudio("amp", ParamSpec(-inf, 20, DbFaderWarp), default(-inf))
+            val db0 = pAudio("amp", ParamSpec(-inf, 20, Warp.DbFader), default(-inf))
             val db  = db0 - 10 * (db0 < -764)  // BUG IN SUPERCOLLIDER
             val res = db.dbAmp
             CheckBadValues.ar(res, id = 666)

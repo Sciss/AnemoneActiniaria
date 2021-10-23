@@ -2,7 +2,7 @@
  *  Promenade.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,14 +13,15 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.stm.Sys
+import de.sciss.lucre.synth.Txn
 import de.sciss.nuages
-import de.sciss.nuages.{ExpWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.nuages.{Nuages, ScissProcs}
+import de.sciss.proc.{ParamSpec, Warp}
 import de.sciss.synth.ugen.ControlValues
 
 object Promenade {
-  def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
-                        (implicit tx: S#Tx, n: Nuages[S]): Unit = {
+  def apply[T <: Txn[T]](dsl: nuages.DSL[T], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
+                        (implicit tx: T, n: Nuages[T]): Unit = {
     import dsl._
 
 //    val masterChansOption = nCfg.masterChannels
@@ -37,12 +38,13 @@ object Promenade {
     generator("prom-7") {
       import de.sciss.synth._
       import ugen._
-      //      val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, ExpWarp), default(0.014))
+      import Import._
+      //      val v11   = pAudio("p1"     , ParamSpec(0.0001, 1.0, Warp.Exp), default(0.014))
 //      val p1              = 5814.3823.!
-      val p1              = pAudio("p1", ParamSpec(0.1, 20000.0, ExpWarp), default(5814.3823))
-      val p2              = pAudio("p2", ParamSpec(0.1, 20000.0, ExpWarp), default(2298.9329))
-      val p3              = pAudio("p3", ParamSpec(0.1, 20000.0, ExpWarp), default(2195.7336))
-      val p4              = pAudio("p4", ParamSpec(0.1, 20000.0, ExpWarp), default( 440.0))
+      val p1              = pAudio("p1", ParamSpec(0.1, 20000.0, Warp.Exp), default(5814.3823))
+      val p2              = pAudio("p2", ParamSpec(0.1, 20000.0, Warp.Exp), default(2298.9329))
+      val p3              = pAudio("p3", ParamSpec(0.1, 20000.0, Warp.Exp), default(2195.7336))
+      val p4              = pAudio("p4", ParamSpec(0.1, 20000.0, Warp.Exp), default( 440.0))
 
       val in_0            = Protect(-607.21533, -inf, inf, dynamic = true)
       val maxDelayTime_0  = Protect(-607.21533, 0.0, 20.0, dynamic = false)
@@ -209,7 +211,7 @@ object Promenade {
       val ring4           = p2 ring4 sinOsc
       val mix             = latoocarfianN + ring4
       val sig             = NegatumOutPre(mix)
-      val _amp   = pAudio("amp", ParamSpec(0.01, 1, ExpWarp), default(0.1))
+      val _amp   = pAudio("amp", ParamSpec(0.01, 1, Warp.Exp), default(0.1))
       sig * _amp
     }
   }

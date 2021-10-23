@@ -1,8 +1,8 @@
 /*
  *  Delaunay.scala
- *  (Negatum)
+ *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2016 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -231,7 +231,7 @@ object Delaunay {
     val n = if (nv <= 0 || nv > 1000) 20 else nv
 
     printf(s"\n\n// Creating $n random points.\n\n")
-    val measurements = for {i <- 0 until n} yield Vector2((i * 400.0 / n).toFloat, (math.random * 400).toFloat)
+    val measurements = for {i <- 0 until n} yield Vector2((i * 400.0 / n).toFloat, (math.random() * 400).toFloat)
     mkProcessing(measurements)
   }
 

@@ -1,38 +1,38 @@
 lazy val commonSettings = Seq(
   name               := "AnemoneActiniaria",
-  version            := "0.7.0-SNAPSHOT",
+  version            := "0.7.0",
   organization       := "de.sciss",
-  scalaVersion       := "2.12.10",
+  scalaVersion       := "2.13.6",
   licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt")),
   homepage           := Some(url(s"https://github.com/Sciss/${name.value}")),
 //  resolvers          += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
-  scalacOptions     ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xfuture", "-Xlint:-stars-align,_"),
+  scalacOptions     ++= Seq("-deprecation", "-unchecked", "-feature", "-encoding", "utf8", "-Xlint:-stars-align,_"),
   scalacOptions      += "-Yrangepos",  // this is needed to extract source code
   updateOptions      := updateOptions.value.withLatestSnapshots(false)
 )
 
 lazy val deps = new {
-  val fscape          = "2.33.2"
-  val lucre           = "3.16.1"
-  val negatum         = "0.12.0"
-  val soundProcesses  = "3.33.0"
-  val submin          = "0.3.4"
-  val ugen            = "1.19.6"
-  val wolkenpumpe     = "2.38.0"
+  val fscape          = "3.9.0"
+  val lucre           = "4.5.0"
+  val negatum         = "1.8.0"
+  val soundProcesses  = "4.10.0"
+  val submin          = "0.3.5"
+  val ugen            = "1.21.1"
+  val wolkenpumpe     = "3.7.0"
 }
 
 lazy val mainCl = "de.sciss.anemone.Anemone"
 
 lazy val assemblySettings = Seq(
-  assemblyJarName in assembly := s"${name.value}.jar",
-  target          in assembly := baseDirectory.value,
-  mainClass       in assembly := Some(mainCl),
-  assemblyMergeStrategy in assembly := {
+  assembly / assemblyJarName := s"${name.value}.jar",
+  assembly / target          := baseDirectory.value,
+  assembly / mainClass       := Some(mainCl),
+  assembly / assemblyMergeStrategy := {
     case "logback.xml" => MergeStrategy.last
     case PathList("org", "xmlpull", _ @ _*)              => MergeStrategy.first
     case PathList("org", "w3c", "dom", "events", _ @ _*) => MergeStrategy.first // bloody Apache Batik
     case x =>
-      val old = (assemblyMergeStrategy in assembly).value
+      val old = (assembly / assemblyMergeStrategy).value
       old(x)
   }
 )
@@ -43,8 +43,8 @@ lazy val root = project.in(file("."))
   .settings(assemblySettings)
   .settings(
     name := "AnemoneActiniaria",
-    mainClass in (Compile, run) := Some(mainCl),
-    fork      in           run  := true,
+    Compile / run / mainClass := Some(mainCl),
+    run / fork  := true,
     libraryDependencies ++= Seq(
       "de.sciss" %% "fscape-lucre"                % deps.fscape,
       "de.sciss" %% "fscape-macros"               % deps.fscape,

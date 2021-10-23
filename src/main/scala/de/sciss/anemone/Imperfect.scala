@@ -2,7 +2,7 @@
  *  Imperfect.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,21 +13,21 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.stm.Sys
+import de.sciss.lucre.synth.Txn
 import de.sciss.nuages._
-import de.sciss.{nuages, synth}
+import de.sciss.proc.{ParamSpec, Proc, Warp}
 import de.sciss.synth.GE
-import de.sciss.synth.proc.Proc
 import de.sciss.synth.ugen.ControlValues
+import de.sciss.{nuages, synth}
 
 object Imperfect {
-  def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
-                        (implicit tx: S#Tx, n: Nuages[S]): Unit = {
+  def apply[T <: Txn[T]](dsl: nuages.DSL[T], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
+                        (implicit tx: T, n: Nuages[T]): Unit = {
     import dsl._
 
-    val masterChansOption = nCfg.masterChannels
+    val mainChansOption = nCfg.mainChannels
 
-    val numOut = if (sCfg.genNumChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.genNumChannels
+    val numOut = if (sCfg.genNumChannels <= 0) mainChansOption.fold(2)(_.size) else sCfg.genNumChannels
 
 //    def mkDetune(in: GE, max: Double = 2.0): GE = {
 //      require(max > 1)
@@ -61,19 +61,20 @@ object Imperfect {
 //      Limiter.ar(LeakDC.ar(sig), dur = 0.01).clip2(1) * amp
 //    }
 
-    masterChansOption.foreach { masterChans =>
-      val numChans          = masterChans.size
-      val masterCfg         = NamedBusConfig("", 0 until numChans)
-      val masterGroupsCfg   = masterCfg +: sCfg.masterGroups
+    mainChansOption.foreach { mainChans =>
+      val numChans          = mainChans.size
+      val mainCfg         = NamedBusConfig("", 0 until numChans)
+      val mainGroupsCfg   = mainCfg +: sCfg.mainGroups
 
-      masterGroupsCfg.zipWithIndex.foreach { case (cfg, _) =>
+      mainGroupsCfg.zipWithIndex.foreach { case (cfg, _) =>
 
         def mkDirectOut(sig0: GE): Unit = {
           import synth._
           import ugen._
+          import Import._
           val bad = CheckBadValues.ar(sig0)
           val sig = Gate.ar(sig0, bad sig_== 0)
-          masterChans.zipWithIndex.foreach { case (ch, i) =>
+          mainChans.zipWithIndex.foreach { case (ch, i) =>
             val sig0 = sig.out(i)
             val hpf  = sCfg.highPass
             val sig1 = if (hpf >= 16 && hpf < 20000) HPF.ar(sig0, hpf) else sig0
@@ -81,7 +82,7 @@ object Imperfect {
           }
         }
 
-        def collectorF(name: String)(fun: GE => Unit): Proc[S] =
+        def collectorF(name: String)(fun: GE => Unit): Proc[T] =
           collector(name, sCfg.genNumChannels)(fun)
 
 //        def placeChannels(sig: GE): GE = {
@@ -98,7 +99,8 @@ object Imperfect {
         def mkAmp(): GE = {
           import synth._
           import ugen._
-          val db0 = pAudio("amp", ParamSpec(-inf, 20, DbFaderWarp), default(-inf))
+          import Import._
+          val db0 = pAudio("amp", ParamSpec(-inf, 20, Warp.DbFader), default(-inf))
           val db  = db0 - 10 * (db0 < -764)  // BUG IN SUPERCOLLIDER
           val res = db.dbAmp
           CheckBadValues.ar(res, id = 666)
@@ -108,6 +110,7 @@ object Imperfect {
         def mkOutTri(in: GE): GE = {
           import synth._
           import ugen._
+          import Import._
           val px            = pControl("x" , ParamSpec(0.0, 1.0),   default(0.5))
           val py            = pControl("y" , ParamSpec(0.0, 1.0),   default(0.5))
 //          val pSpread       = pControl("spr" , ParamSpec(0.0, 1.0),   default(0.25)) // XXX rand

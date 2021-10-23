@@ -2,7 +2,7 @@
  *  Mutagens.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,23 +13,25 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.stm.Sys
-import de.sciss.nuages.{ExpWarp, LinearWarp, Nuages, ParamSpec, ScissProcs}
+import de.sciss.lucre.synth.Txn
+import de.sciss.nuages.{Nuages, ScissProcs}
+import de.sciss.proc.{ParamSpec, Warp}
 import de.sciss.synth.GE
 import de.sciss.synth.ugen.ControlValues
 import de.sciss.{nuages, synth}
 
 object ShouldGens {
-  def apply[S <: Sys[S]](dsl: nuages.DSL[S], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
-                        (implicit tx: S#Tx, n: Nuages[S]): Unit = {
+  def apply[T <: Txn[T]](dsl: nuages.DSL[T], sCfg: ScissProcs.Config, nCfg: Nuages.Config)
+                        (implicit tx: T, n: Nuages[T]): Unit = {
     import dsl._
 
-    val masterChansOption = nCfg.masterChannels
+    val masterChansOption = nCfg.mainChannels
 
     val numOut = if (sCfg.genNumChannels <= 0) masterChansOption.fold(2)(_.size) else sCfg.genNumChannels
 
     def mkDetune(in: GE, det: GE): GE = {
       import synth._
+      import Import._
       val detL = Vector.tabulate(numOut) { ch =>
         val m = (ch: GE).linLin(0, (numOut - 1).max(1), 1, det out 0)
         m
@@ -40,6 +42,7 @@ object ShouldGens {
     def mkExpDetune(in: GE, det: GE): GE = {
       import synth._
       import ugen._
+      import Import._
       val detL = Vector.tabulate(numOut) { ch =>
         val m = DC.ar(ch: GE).linExp(DC.ar(0), DC.ar((numOut - 1).max(1)), DC.ar(1), det out 0)
         m
@@ -56,9 +59,10 @@ object ShouldGens {
     generator("shd-eb5b") {
       import synth._
       import ugen._
-      val pFreq0  = pAudio("p1"     , ParamSpec(0.1 , 10000.0, ExpWarp), default(8.824352))
-      val pFreq1  = pAudio("p2"     , ParamSpec(10.0, 18000.0, ExpWarp), default(7860.8604))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      import Import._
+      val pFreq0  = pAudio("p1"     , ParamSpec(0.1 , 10000.0, Warp.Exp), default(8.824352))
+      val pFreq1  = pAudio("p2"     , ParamSpec(10.0, 18000.0, Warp.Exp), default(7860.8604))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
       val pDet1   = pAudio("det1"   , ParamSpec(1.0, 2.0), default(1))
       val pDet2   = pAudio("det2"   , ParamSpec(1.0, 2.0), default(1))
       RandSeed.ir
@@ -79,14 +83,15 @@ object ShouldGens {
     generator("shd-39c4") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = default(8.722097E-4).seq: GE // pAudio("p1"     , ParamSpec(1.0e-5 , 1.0, ExpWarp), default(8.722097E-4))
-      val pFreq1  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(10.0))
-      val pFreq2  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(29.300417))
-      val pFreq3  = pAudio("p3"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(1209.1062))
-      val pWidth0 = pAudio("width"  , ParamSpec(0.0001, 0.9999, LinearWarp), default(0.031116353))
+      val pFreq0  = default(8.722097E-4).seq: GE // pAudio("p1"     , ParamSpec(1.0e-5 , 1.0, Warp.Exp), default(8.722097E-4))
+      val pFreq1  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(10.0))
+      val pFreq2  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(29.300417))
+      val pFreq3  = pAudio("p3"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(1209.1062))
+      val pWidth0 = pAudio("width"  , ParamSpec(0.0001, 0.9999, Warp.Lin), default(0.031116353))
       val pDet1   = pAudio("det"    , ParamSpec(1.0, 2.0), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
       //      RandSeed.ir
 
@@ -149,7 +154,7 @@ object ShouldGens {
 //      import ugen._
 //
 //      val pDet1   = pAudio("det"    , ParamSpec(1.0, 2.0), default(1))
-//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 //
 //      val seq0 = Seq.tabulate(4)(i => 1.005.pow(i))
 //
@@ -206,12 +211,12 @@ object ShouldGens {
 //      import synth._
 //      import ugen._
 //
-//      val pFreq0  = pAudio("p1"     , ParamSpec(0.1 , 1000.0, ExpWarp), default(1.5504636))
-//      val pFreq1  = pAudio("p2"     , ParamSpec(0.1 , 1000.0, ExpWarp), default(1.0))
-//      val pFreq2  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(3009.2053))
+//      val pFreq0  = pAudio("p1"     , ParamSpec(0.1 , 1000.0, Warp.Exp), default(1.5504636))
+//      val pFreq1  = pAudio("p2"     , ParamSpec(0.1 , 1000.0, Warp.Exp), default(1.0))
+//      val pFreq2  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(3009.2053))
 //      val pDet1   = pAudio("det1"   , ParamSpec(1.0, 2.0), default(1))
 //      val pDet2   = pAudio("det2"   , ParamSpec(1.0, 2.0), default(1))
-//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 //
 //      val freq0: GE = mkExpDetune(pFreq0, pDet1)
 //      val freq1: GE = mkExpDetune(pFreq1, pDet2) // seq1.map(_ * "freq1".kr(1.0))
@@ -253,11 +258,12 @@ object ShouldGens {
     generator("shd-4646") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(9028.016))
-      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(500.0))
+      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(9028.016))
+      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(500.0))
       val pDet1   = pAudio("det"    , ParamSpec(1.0, 2.0), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
       val freq0 = mkExpDetune(pFreq0, pDet1) // seq0.map(_ * "freq0".ar(9028.016))
       val freq1 = mkExpDetune(pFreq1, pDet1) // seq0.map(_ * "freq1".ar(500.0))
@@ -300,11 +306,11 @@ object ShouldGens {
 //      import synth._
 //      import ugen._
 //
-//      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(8703.354))
-//      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(113.3615))
+//      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(8703.354))
+//      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(113.3615))
 //      val pDet1   = pAudio("det1"   , ParamSpec(1.0, 2.0), default(1))
 //      val pDet2   = pAudio("det2"   , ParamSpec(1.0, 2.0), default(1))
-//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 //
 //      val freq0 = mkExpDetune(pFreq0, pDet1) // seq0.map(_ * "freq0".kr(8703.354))
 //      val freq1 = mkExpDetune(pFreq1, pDet2) // seq1.map(_ * "freq1".kr(113.3615 * 1))
@@ -381,14 +387,15 @@ object ShouldGens {
     generator("shd-e6ee") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(10.0))
-      val pFreq1  = 10.0 // pAudio("p2"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(10.0))
-      val pFreq2  = 10.0 // pAudio("p3"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(10.0))
-      val pFreq3  = pAudio("p4"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(7387.0054))
-      val pAmt0   = pAudio("sin"    , ParamSpec(0.0001, 1.0, ExpWarp), default(1.0))
+      val pFreq0  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(10.0))
+      val pFreq1  = 10.0 // pAudio("p2"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(10.0))
+      val pFreq2  = 10.0 // pAudio("p3"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(10.0))
+      val pFreq3  = pAudio("p4"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(7387.0054))
+      val pAmt0   = pAudio("sin"    , ParamSpec(0.0001, 1.0, Warp.Exp), default(1.0))
       val pDet1   = pAudio("det"    , ParamSpec(1.0, 0.5), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
       val freq1 = mkExpDetune(pFreq0, pDet1) // "freq1".ar(10.0)
       val freq2 = mkExpDetune(pFreq1, pDet1) // "freq2".ar(10.0)
@@ -449,13 +456,13 @@ object ShouldGens {
 //      import synth._
 //      import ugen._
 //
-//      val pFreq0  = pAudio("p1"     , ParamSpec(1.0e-5 , 1.0, ExpWarp), default(8.722097E-4))
-//      val pFreq1  = pAudio("p2"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(10.0))
-//      val pFreq2  = pAudio("p3"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(29.300417))
-//      val pFreq3  = pAudio("p4"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(1209.1062))
-//      val pWidth  = pAudio("width"  , ParamSpec(0.001 , 0.49, ExpWarp), default(0.031116353))
+//      val pFreq0  = pAudio("p1"     , ParamSpec(1.0e-5 , 1.0, Warp.Exp), default(8.722097E-4))
+//      val pFreq1  = pAudio("p2"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(10.0))
+//      val pFreq2  = pAudio("p3"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(29.300417))
+//      val pFreq3  = pAudio("p4"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(1209.1062))
+//      val pWidth  = pAudio("width"  , ParamSpec(0.001 , 0.49, Warp.Exp), default(0.031116353))
 //      val pDet1   = pAudio("det"    , ParamSpec(1.0, 0.5), default(1))
-//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+//      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 //
 //      RandSeed.ir
 //      val freq0   = mkExpDetune(pFreq0, pDet1) // seq0.map(_ * 8.722097E-4)
@@ -511,12 +518,13 @@ object ShouldGens {
     generator("shd-65fb") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(7.307391))
-      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(1093.7816))
+      val pFreq0  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(7.307391))
+      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(1093.7816))
       val pDet1   = pAudio("det1"   , ParamSpec(1.0, 0.5), default(1))
       val pDet2   = pAudio("det2"   , ParamSpec(1.0, 0.5), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
       val freq0: GE = mkExpDetune(pFreq0, pDet1) // seq0: GE) * "freq0".ar(7.307391)
       val freq1: GE = mkExpDetune(pFreq1, pDet2) // (seq1: GE) * "freq1".ar(1093.7816 * 0.125)
@@ -564,12 +572,13 @@ object ShouldGens {
     generator("shd-3e66") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, ExpWarp), default(441.0))
-      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(501.0))
+      val pFreq0  = pAudio("p1"     , ParamSpec(1.0 , 10000.0, Warp.Exp), default(441.0))
+      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(501.0))
       val pDet1   = pAudio("det"   , ParamSpec(1.0, 0.5), default(1))
 //      val pDet2   = pAudio("det2"   , ParamSpec(1.0, 0.5), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
 //      val seq0 = Seq.tabulate(4)(i => 1.005.pow(i))
       val freq0 = mkExpDetune(pFreq0, pDet1) // (seq0: GE) * "freq0".ar(440.0)
@@ -611,13 +620,14 @@ object ShouldGens {
     generator("shd-9f80") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(812.973))
-      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(179.85915))
-      val pFreq2  = pAudio("p3"     , ParamSpec(0.1 , 1000.0, ExpWarp), default(2.9367235))
+      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(812.973))
+      val pFreq1  = pAudio("p2"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(179.85915))
+      val pFreq2  = pAudio("p3"     , ParamSpec(0.1 , 1000.0, Warp.Exp), default(2.9367235))
       val pDet1   = pAudio("det1"   , ParamSpec(1.0, 0.5), default(1))
       val pDet2   = pAudio("det2"   , ParamSpec(1.0, 0.5), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
       //      val seq0 = Seq.tabulate(4)(i => 1.005.pow(i))
       val freq0 = mkExpDetune(pFreq0, pDet1) // (seq0: GE) * "freq0".ar(440.0)
@@ -671,13 +681,14 @@ object ShouldGens {
     generator("shd-15c2") {
       import synth._
       import ugen._
+      import Import._
 
-      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, ExpWarp), default(149.40091))
-      val pFreq1  = pAudio("p2"     , ParamSpec(-10.0 , -0.01, ExpWarp), default(-1.5486484))
-//      val pFreq2  = pAudio("p3"     , ParamSpec(0.55 * 0.1 , 0.55 * 1.95, ExpWarp), default(0.55))
-//      val pFreq2  = pAudio("p3"     , ParamSpec(0.1 , 1000.0, ExpWarp), default(10.0))
+      val pFreq0  = pAudio("p1"     , ParamSpec(5.0 , 18000.0, Warp.Exp), default(149.40091))
+      val pFreq1  = pAudio("p2"     , ParamSpec(-10.0 , -0.01, Warp.Exp), default(-1.5486484))
+//      val pFreq2  = pAudio("p3"     , ParamSpec(0.55 * 0.1 , 0.55 * 1.95, Warp.Exp), default(0.55))
+//      val pFreq2  = pAudio("p3"     , ParamSpec(0.1 , 1000.0, Warp.Exp), default(10.0))
       val pDet1   = pAudio("det"    , ParamSpec(1.0, 0.5), default(1))
-      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, ExpWarp), default(0.1))
+      val amp     = pAudio("amp"    , ParamSpec(0.01,     1, Warp.Exp), default(0.1))
 
       val freq0 = mkExpDetune(pFreq0, pDet1) // Seq(1.0, 1.02): GE) * "freq0".ar(149.40091)
       val freq1 = mkExpDetune(pFreq1, pDet1) // (Seq(1.0, 0.99): GE) * "freq1".ar(-1.5486484)

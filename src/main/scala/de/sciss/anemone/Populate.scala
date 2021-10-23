@@ -2,7 +2,7 @@
  *  Populate.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,10 +13,11 @@
 
 package de.sciss.anemone
 
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Folder
-import de.sciss.nuages.{ExpWarp, IntWarp, Nuages, ParamSpec, ScissProcs}
-import de.sciss.synth.proc.Implicits._
+import de.sciss.lucre.Folder
+import de.sciss.lucre.synth.Txn
+import de.sciss.nuages.{Nuages, ScissProcs}
+import de.sciss.proc.Implicits._
+import de.sciss.proc.{ParamSpec, Warp}
 import de.sciss.{nuages, synth}
 
 object Populate {
@@ -29,19 +30,20 @@ object Populate {
 
   final val NuagesName = "Nuages"
 
-  def getNuages[S <: stm.Sys[S]](root: Folder[S])(implicit tx: S#Tx): Option[Nuages[S]] =
+  def getNuages[T <: Txn[T]](root: Folder[T])(implicit tx: T): Option[Nuages[T]] =
     (root / NuagesName).flatMap {
-      case n: Nuages[S] => Some(n)
+      case n: Nuages[T] => Some(n)
       case _ => None
     }
 
-  def apply[S <: stm.Sys[S]](n: Nuages[S], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
-                        (implicit tx: S#Tx): Unit = {
-    implicit val _n: Nuages[S] = n
-    val dsl = nuages.DSL[S]
+  def apply[T <: Txn[T]](n: Nuages[T], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
+                        (implicit tx: T): Unit = {
+    implicit val _n: Nuages[T] = n
+    val dsl = nuages.DSL[T]
     import dsl._
     import synth._
     import ugen._
+    import Import._
 
     Mutagens          (dsl, sConfig, nConfig)
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
@@ -68,7 +70,7 @@ object Populate {
 
 //    val dirUniv = file("/data/projects/SeaM20/audio_work/")
 //    val fUniv   = dirUniv / "univ-arr.aif"
-//    val locUniv = ArtifactLocation.newConst[S](dirUniv)
+//    val locUniv = ArtifactLocation.newConst[T](dirUniv)
 //    val procUniv = generator("univ") {
 //      val thresh  = -80.dbamp
 //      val runIn   = LocalIn.kr(0)
@@ -88,7 +90,7 @@ object Populate {
 //    }
 //    val artUniv   = Artifact(locUniv, fUniv)
 //    val specUniv  = AudioFile.readSpec(fUniv)
-//    val cueUniv   = AudioCue.Obj[S](artUniv, specUniv, 0L, 1.0)
+//    val cueUniv   = AudioCue.Obj[T](artUniv, specUniv, 0L, 1.0)
 //    procUniv.attr.put("file", cueUniv)
 
     // --------------- ANEMONE ----------------
@@ -97,9 +99,9 @@ object Populate {
       generator("a~beat") {
         shortcut = "B"
         val off     = cfg.indices // .offset
-        val pThresh = pAudio("thresh", ParamSpec(0.01, 1, ExpWarp), default(0.1))
+        val pThresh = pAudio("thresh", ParamSpec(0.01, 1, Warp.Exp), default(0.1))
         val in      = Trig1.ar(PhysicalIn.ar(off) - pThresh, 0.02)
-        val pDiv    = pAudio("div", ParamSpec(1, 16, IntWarp), default(1.0))
+        val pDiv    = pAudio("div", ParamSpec(1, 16, Warp.Int), default(1.0))
         val pulse   = PulseDivider.ar(in, pDiv)
         val pTime   = pAudio("time", ParamSpec(0.0 , 1.0), default(0.0))
         val sig     = DelayN.ar(pulse, 1.0, pTime)

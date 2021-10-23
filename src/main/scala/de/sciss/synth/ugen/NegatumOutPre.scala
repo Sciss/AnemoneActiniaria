@@ -1,6 +1,18 @@
+/*
+ *  NegatumOutPre.scala
+ *  (Anemone-Actiniaria)
+ *
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
+ *
+ *  This software is published under the GNU General Public License v3+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.synth.ugen
 
-import de.sciss.numbers.Implicits._
 import de.sciss.synth.{AudioRated, GE, UGenInLike}
 
 object NegatumOutPre {
@@ -16,6 +28,7 @@ object NegatumOutPre {
 final case class NegatumOutPre(in: GE) extends GE.Lazy with AudioRated {
   protected def makeUGens: UGenInLike = {
     import NegatumOutPre._
+    import de.sciss.synth.Import._
 
     val sig0  = Mix.mono(in)
     val isOk  = CheckBadValues.ar(sig0, post = 0) sig_== 0

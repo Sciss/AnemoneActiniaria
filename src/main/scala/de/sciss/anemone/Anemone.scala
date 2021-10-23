@@ -2,7 +2,7 @@
  *  Anemone.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,33 +13,28 @@
 
 package de.sciss.anemone
 
-import java.awt.Color
-import java.text.SimpleDateFormat
-import java.util.Locale
-
 import de.sciss.audiowidgets.RotaryKnob
 import de.sciss.equal.Implicits._
 import de.sciss.file._
-import de.sciss.fscape.lucre.FScape
-import de.sciss.numbers
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.Folder
-import de.sciss.lucre.stm.store.BerkeleyDB
-import de.sciss.lucre.synth._
+import de.sciss.lucre.store.BerkeleyDB
+import de.sciss.lucre.synth.{InMemory, Server, Synth, Txn}
+import de.sciss.lucre.{Cursor, Folder, Source}
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
+import de.sciss.{nuages, numbers, osc}
+import de.sciss.proc.{Durable, FScape, Timeline, Universe}
 import de.sciss.submin.Submin
-import de.sciss.synth.proc.{Durable, Timeline, Universe}
 import de.sciss.synth.{SynthGraph, addAfter}
-import de.sciss.{nuages, osc}
-import javax.swing.DefaultBoundedRangeModel
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
+import java.text.SimpleDateFormat
+import java.util.Locale
+import javax.swing.DefaultBoundedRangeModel
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.swing.event.ValueChanged
-import scala.swing.{Dimension, Swing}
+import scala.swing.{Color, Dimension, Swing}
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -418,14 +413,28 @@ object Anemone {
     timeline  = true
   )
 
-  private val config: Config = Madeira
+  lazy val Muna: Config = Config(
+    masterChannels    = 0 until 4,
+    soloChannels      = 0 until 0,
+    genNumChannels    = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa", 0 until 2)
+    ),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true
+  )
 
-  def mkSurface[S <: Sys[S]](config: Config)(implicit tx: S#Tx): Surface[S] =
+  private val config: Config = Muna
+
+  def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {
-      val tl = Timeline[S]
+      val tl = Timeline[T]()
       Surface.Timeline(tl)
     } else {
-      val f = Folder[S]
+      val f = Folder[T]()
       Surface.Folder(f)
     }
 
@@ -441,26 +450,28 @@ object Anemone {
     config.database match {
       case Some(f) =>
         type S = Durable
+        type T = Durable.Txn
         implicit val system: S = Durable(BerkeleyDB.factory(f))
-        val anemone = new Anemone[S](config)
+        val anemone = new Anemone[T](config)
         val nuagesH = system.root { implicit tx =>
-          Nuages[S](mkSurface(config))
+          Nuages[T](mkSurface[T](config))
         }
         anemone.run(nuagesH)
 
       case None =>
         type S = InMemory
+        type T = InMemory.Txn
         implicit val system: S = InMemory()
-        val anemone = new Anemone[InMemory](config)
+        val anemone = new Anemone[T](config)
         val nuagesH = system.step { implicit tx =>
-          val n = Nuages[S](mkSurface(config))
+          val n = Nuages[T](mkSurface(config))
           tx.newHandle(n)
         }
         anemone.run(nuagesH)
     }
   }
 }
-class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
+class Anemone[T <: Txn[T]](config: Anemone.Config) extends WolkenpumpeMain[T] {
 
   override protected def configure(sCfg: ScissProcs.ConfigBuilder, nCfg: Nuages.ConfigBuilder,
                                    aCfg: Server.ConfigBuilder): Unit = {
@@ -470,14 +481,14 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     nCfg.micInputs          = config.micInputs
     nCfg.lineInputs         = config.lineInputs
     nCfg.lineOutputs        = config.lineOutputs
-    sCfg.masterGroups       = config.masterGroups
+    sCfg.mainGroups         = config.masterGroups
     // sCfg.highPass           = 100
     sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
     sCfg.plugins            = true
     sCfg.recDir             = file("/data/audio_work/nuages_test")
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
-    nCfg.masterChannels     = Some(config.masterChannels)
+    nCfg.mainChannels       = Some(config.masterChannels)
     nCfg.soloChannels       = if (config.soloChannels.nonEmpty) Some(config.soloChannels) else None
     nCfg.recordPath         = Some((userHome / "Music" / "rec").path) // XXX has no effect?
 
@@ -487,8 +498,8 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     if (config.device.isDefined) aCfg.deviceName = config.device
   }
 
-  override protected def registerProcesses(nuages: Nuages[S], nCfg: Nuages.Config, sCfg: ScissProcs.Config)
-                                 (implicit tx: S#Tx, universe: Universe[S]): Unit = {
+  override protected def registerProcesses(nuages: Nuages[T], nCfg: Nuages.Config, sCfg: ScissProcs.Config)
+                                 (implicit tx: T, universe: Universe[T]): Unit = {
     super.registerProcesses(nuages, nCfg, sCfg)
     Populate(nuages, nCfg, sCfg)
   }
@@ -567,7 +578,7 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
     })
   }
 
-  override def run(nuagesH: stm.Source[S#Tx, Nuages[S]])(implicit cursor: stm.Cursor[S]): Unit = {
+  override def run(nuagesH: Source[T, Nuages[T]])(implicit cursor: Cursor[T]): Unit = {
     super.run(nuagesH)
 
     if (config.tablet) cursor.step { implicit tx =>
@@ -592,13 +603,14 @@ class Anemone[S <: Sys[S]](config: Anemone.Config) extends WolkenpumpeMain[S] {
           Swing.onEDT {
             val p   = view.panel
             val vis = p.visualization
-            val ctl = new LightFollowControl[S](view, vis)
+            val ctl = new LightFollowControl[T](view, vis)
             val dsp = p.display
             dsp.addControlListener(ctl)
 
             val tgt = new java.net.InetSocketAddress("192.168.0.25", 0x4C69)
             val graph = SynthGraph {
               import de.sciss.synth._
+              import Import._
               import Ops._
               import ugen._
               val tr    = Impulse.kr(100.0)

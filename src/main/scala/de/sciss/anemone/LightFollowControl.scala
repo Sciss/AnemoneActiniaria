@@ -2,7 +2,7 @@
  *  LightFollowControl.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2020 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -13,33 +13,31 @@
 
 package de.sciss.anemone
 
-import java.awt.event.MouseEvent
-
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.lucre.stm.{Disposable, TxnLike}
-import de.sciss.lucre.synth.{AudioBus, Synth, Sys, Txn}
+import de.sciss.lucre.synth.{AudioBus, RT, Synth, Txn}
+import de.sciss.lucre.{Cursor, Disposable, TxnLike}
+import de.sciss.lucre.Txn.peer
 import de.sciss.nuages.{NuagesAttribute, NuagesObj, NuagesParam, NuagesShapeRenderer, NuagesView}
-import de.sciss.synth.proc.Proc
+import de.sciss.proc.Proc
 import prefuse.Visualization
 import prefuse.controls.ControlAdapter
 import prefuse.visual.VisualItem
 
+import java.awt.event.MouseEvent
 import scala.concurrent.stm.Ref
 
-class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) extends ControlAdapter {
-  private[this] val csr: stm.Cursor[S] = view.panel.cursor
+class LightFollowControl[T <: Txn[T]](view: NuagesView[T], vis: Visualization) extends ControlAdapter {
+  private[this] val csr: Cursor[T] = view.panel.cursor
 
   private[this] val synthRef  = Ref(Option.empty[Synth])
   private[this] val busRef    = Ref(Option.empty[AudioBus])
-  private[this] val busSetter = Ref(Disposable.empty[Txn])
+  private[this] val busSetter = Ref(Disposable.empty[RT])
 
   private[this] var lastPressed: AnyRef = _
 
   def synth(implicit tx: TxnLike): Option[Synth] = synthRef()
   def synth_=(value: Option[Synth])(implicit tx: TxnLike): Unit = synthRef() = value
 
-  private def nodePressed(data: NuagesObj[S])(implicit tx: S#Tx): Unit =
+  private def nodePressed(data: NuagesObj[T])(implicit tx: T): Unit =
     for {
       out <- data.getOutput(Proc.mainOut)
       m   <- out.meterOption
@@ -69,7 +67,7 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
     r match {
       case _ /* pr */: NuagesShapeRenderer[_] =>
         vi.get("nuages" /* COL_NUAGES */) match {
-          case data: NuagesObj[S] =>
+          case data: NuagesObj[T] =>
             if (data == lastPressed) return
             lastPressed = data
 
@@ -77,7 +75,7 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
               nodePressed(data)
             }
 
-          case i: NuagesAttribute.Input[S] =>
+          case i: NuagesAttribute.Input[T] =>
             // println("DING")
             if (i == lastPressed) return
             lastPressed = i
@@ -85,14 +83,14 @@ class LightFollowControl[S <: Sys[S]](view: NuagesView[S], vis: Visualization) e
 
             csr.step { implicit tx =>
               i.inputParent match {
-                case p: NuagesParam[S] =>
+                case p: NuagesParam[T] =>
                   // println("DANG")
                   nodePressed(p.parent)
                 case _ =>
               }
             }
 
-//          case p: NuagesParam [S] =>
+//          case p: NuagesParam [T] =>
 //            csr.step { implicit tx =>
 //              nodePressed(p.parent)
 //            }

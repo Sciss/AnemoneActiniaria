@@ -1,8 +1,8 @@
 /*
  *  Speakers.scala
- *  (Negatum)
+ *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2016 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -106,6 +106,7 @@ object Speakers {
   }
 
   final case class ProjGE(x: GE, y: GE, loc: GE) {
+    import de.sciss.synth.Import._
     def inside: GE = 0 <= loc & loc <= 1
   }
 
@@ -145,6 +146,7 @@ object Speakers {
   }
 
   def projectPointOntoLineSegmentGE(v1x: Float, v1y: Float, v2x: Float, v2y: Float, px: GE, py: GE): ProjGE = {
+    import de.sciss.synth.Import._
     val dvx   = v2x - v1x
     val dvy   = v2y - v1y
     val dpx   = px - v1x
@@ -158,6 +160,7 @@ object Speakers {
   }
 
   def projectPointLineLoc(v1x: Float, v1y: Float, v2x: Float, v2y: Float, px: GE, py: GE): GE = {
+    import de.sciss.synth.Import._
     val dvx   = v2x - v1x
     val dvy   = v2y - v1y
     val dpx   = px - v1x

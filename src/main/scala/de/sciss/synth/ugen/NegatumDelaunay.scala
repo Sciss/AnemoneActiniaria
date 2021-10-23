@@ -1,3 +1,16 @@
+/*
+ *  NegatumDelaunay.scala
+ *  (Anemone-Actiniaria)
+ *
+ *  Copyright (c) 2014-2021 Hanns Holger Rutz. All rights reserved.
+ *
+ *  This software is published under the GNU General Public License v3+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.synth
 package ugen
 
@@ -18,6 +31,7 @@ final case class NegatumDelaunay(x: GE, y: GE) extends GE.Lazy {
   def rate: MaybeRate = MaybeRate.max_?(x.rate, y.rate)
 
   private def insideGE(px: GE, py: GE): Vec[GE] = {
+    import de.sciss.synth.Import._
     val sq = tri.map { case TriangleIndex(i1, i2, i3) =>
       val v1    = selectN(i1)
       val v2    = selectN(i2)
@@ -41,6 +55,7 @@ final case class NegatumDelaunay(x: GE, y: GE) extends GE.Lazy {
     val amps = Array.fill[GE](selectN.size)(Constant.C0)
     val ins  = insideGE(px, py)
 
+    import de.sciss.synth.Import._
     tri.zipWithIndex.foreach { case (TriangleIndex(i1, i2, i3), triIdx) =>
       val v1    = selectN(i1)
       val v2    = selectN(i2)

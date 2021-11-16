@@ -427,7 +427,21 @@ object Anemone {
     timeline  = true
   )
 
-  private val config: Config = Muna
+  lazy val Piksel: Config = Config(
+    masterChannels    = 0 until 4,
+    soloChannels      = 0 until 0,
+    genNumChannels    = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-pirro", 0 until 2)
+    ),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device    = Some("Wolkenpumpe"),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true
+  )
+
+  private val config: Config = Piksel
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {

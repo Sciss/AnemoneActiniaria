@@ -1,8 +1,8 @@
 lazy val commonSettings = Seq(
   name               := "AnemoneActiniaria",
-  version            := "0.7.0",
+  version            := "0.8.0-SNAPSHOT",
   organization       := "de.sciss",
-  scalaVersion       := "2.13.6",
+  scalaVersion       := "2.13.7",
   licenses           := Seq("GPL v3+" -> url("http://www.gnu.org/licenses/gpl-3.0.txt")),
   homepage           := Some(url(s"https://github.com/Sciss/${name.value}")),
 //  resolvers          += "Oracle Repository" at "http://download.oracle.com/maven",  // required for sleepycat
@@ -12,13 +12,13 @@ lazy val commonSettings = Seq(
 )
 
 lazy val deps = new {
-  val fscape          = "3.9.0"
-  val lucre           = "4.5.0"
-  val negatum         = "1.8.0"
-  val soundProcesses  = "4.10.0"
+  val fscape          = "3.11.0"
+  val lucre           = "4.5.1"
+  val negatum         = "1.10.0"
+  val soundProcesses  = "4.12.0"
   val submin          = "0.3.5"
-  val ugen            = "1.21.1"
-  val wolkenpumpe     = "3.7.0"
+  val ugen            = "1.21.3"
+  val wolkenpumpe     = "3.9.0"
 }
 
 lazy val mainCl = "de.sciss.anemone.Anemone"

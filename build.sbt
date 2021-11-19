@@ -13,12 +13,12 @@ lazy val commonSettings = Seq(
 
 lazy val deps = new {
   val fscape          = "3.11.0"
-  val lucre           = "4.5.1"
+  val lucre           = "4.5.2"
   val negatum         = "1.10.0"
-  val soundProcesses  = "4.12.0"
+  val soundProcesses  = "4.12.2"
   val submin          = "0.3.5"
   val ugen            = "1.21.3"
-  val wolkenpumpe     = "3.9.0"
+  val wolkenpumpe     = "3.9.1"
 }
 
 lazy val mainCl = "de.sciss.anemone.Anemone"

@@ -50,6 +50,7 @@ object Populate {
     Promenade         (dsl, sConfig, nConfig)
     Almat             (dsl, sConfig, nConfig)
     ShouldGens        (dsl, sConfig, nConfig)
+    PikselGens        (dsl, sConfig, nConfig)
 //    Imperfect         (dsl, sConfig, nConfig)
 //    Cracks            (dsl, sConfig, nConfig)
 

@@ -441,7 +441,7 @@ object Anemone {
     timeline  = true
   )
 
-  private val config: Config = Madeira
+  private val config: Config = Piksel
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {

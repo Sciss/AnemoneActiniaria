@@ -15,9 +15,9 @@ lazy val commonSettings = Seq(
 )
 
 lazy val deps = new {
-  val fscape          = "3.13.0"
+  val fscape          = "3.14.0"
   val lucre           = "4.6.0"
-  val negatum         = "1.12.0"
+  val negatum         = "1.13.0"
   val soundProcesses  = "4.14.2"
   val submin          = "0.3.5"
   val ugen            = "1.21.3"

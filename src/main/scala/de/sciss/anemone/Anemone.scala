@@ -18,17 +18,18 @@ import de.sciss.equal.Implicits._
 import de.sciss.file._
 import de.sciss.lucre.store.BerkeleyDB
 import de.sciss.lucre.synth.{InMemory, Server, Synth, Txn}
-import de.sciss.lucre.{Cursor, Folder, Source}
+import de.sciss.lucre.{Cursor, DataStore, Folder, Source}
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.{nuages, numbers, osc}
-import de.sciss.proc.{Durable, FScape, Timeline, Universe}
+import de.sciss.proc.{Durable, FScape, Timeline, Universe, Workspace}
 import de.sciss.submin.Submin
 import de.sciss.synth.{SynthGraph, addAfter}
 import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.swing.DefaultBoundedRangeModel
@@ -40,7 +41,8 @@ import scala.util.control.NonFatal
 
 object Anemone {
   def mkDatabase(parent: File): File = {
-    val recFormat = new SimpleDateFormat("'session_'yyMMdd'_'HHmmss", Locale.US)
+    require (parent.isDirectory)
+    val recFormat = new SimpleDateFormat("'session_'yyMMdd'_'HHmmss'.mllt'", Locale.US)
     parent / recFormat.format(new java.util.Date)
   }
 
@@ -441,7 +443,21 @@ object Anemone {
     timeline  = true
   )
 
-  private val config: Config = Piksel
+  lazy val Pieces: Config = Config(
+    masterChannels    = 0 until 4,
+    soloChannels      = 0 until 0,
+    genNumChannels    = 4,
+    micInputs         = Vector(
+      NamedBusConfig("m-pirro", 0 until 2)
+    ),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device    = Some("Wolkenpumpe"),
+    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline  = true
+  )
+
+  private val config: Config = Pieces
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {
@@ -450,6 +466,19 @@ object Anemone {
     } else {
       val f = Folder[T]()
       Surface.Folder(f)
+    }
+
+  private def createWorkspace(folder: File): Workspace.Durable =
+    try {
+      val config          = BerkeleyDB.Config()
+      config.allowCreate  = true
+      val ds              = BerkeleyDB.factory(folder, config)
+      // config.lockTimeout  = Duration(Prefs.dbLockTimeout.getOrElse(Prefs.defaultDbLockTimeout), TimeUnit.MILLISECONDS)
+      val meta = Map(
+        (Workspace.KeySoundProcessesVersion, de.sciss.proc.BuildInfo.version),
+      )
+
+      Workspace.Durable.empty(folder.toURI, ds, meta = meta)
     }
 
   def main(args: Array[String]): Unit = {
@@ -465,10 +494,13 @@ object Anemone {
       case Some(f) =>
         type S = Durable
         type T = Durable.Txn
+        val ws = createWorkspace(f)
         implicit val system: S = Durable(BerkeleyDB.factory(f))
         val anemone = new Anemone[T](config)
-        val nuagesH = system.root { implicit tx =>
-          Nuages[T](mkSurface[T](config))
+        val nuagesH = system.step { implicit tx =>
+          val n = Nuages[T](mkSurface[T](config))
+          ws.root.addLast(n)
+          tx.newHandle(n)
         }
         anemone.run(nuagesH)
 

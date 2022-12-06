@@ -18,7 +18,7 @@ import de.sciss.equal.Implicits._
 import de.sciss.file._
 import de.sciss.lucre.store.BerkeleyDB
 import de.sciss.lucre.synth.{InMemory, Server, Synth, Txn}
-import de.sciss.lucre.{Cursor, DataStore, Folder, Source}
+import de.sciss.lucre.{Cursor, Folder, Source}
 import de.sciss.nuages.Nuages.Surface
 import de.sciss.nuages.{NamedBusConfig, Nuages, ScissProcs, Wolkenpumpe, WolkenpumpeMain}
 import de.sciss.{nuages, numbers, osc}
@@ -29,7 +29,6 @@ import jpen.event.{PenAdapter, PenManagerListener}
 import jpen.owner.multiAwt.AwtPenToolkit
 import jpen.{PLevel, PLevelEvent, PenDevice, PenProvider}
 
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.swing.DefaultBoundedRangeModel

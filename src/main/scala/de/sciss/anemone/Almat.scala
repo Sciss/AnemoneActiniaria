@@ -140,15 +140,15 @@ object Almat {
       val fft = Fourier(inC, size = numFramesInT,
         padding = numFramesOut - numFramesInT, dir = dirFFT)
 
-      def mkProgress(x: GE, label: String) =
+      def mkProgress[A](x: GE[A], label: String) =
         ProgressFrames(x, numFramesOut, label)
 
-      def normalize(x: GE): GE = {
+      def normalize(x: GE.D): GE.D = {
         val rsmpBuf   = BufferDisk(x)
         val rMax      = RunningMax(Reduce.max(x.abs))
         mkProgress(rMax, "analyze")
         val maxAmp    = rMax.last
-        val div       = maxAmp + (maxAmp sig_== 0.0)
+        val div       = maxAmp + (maxAmp sig_== 0.0).toDouble
         val gainAmtN  = 1.0 /*gainAmt*/ / div
         rsmpBuf * gainAmtN
       }

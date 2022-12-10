@@ -442,21 +442,22 @@ object Anemone {
     timeline  = true
   )
 
-  lazy val Pieces: Config = Config(
-    masterChannels    = 0 until 4,
+  lazy val Rome: Config = Config(
+    masterChannels    = 2 until 6,
     soloChannels      = 0 until 0,
     genNumChannels    = 4,
     micInputs         = Vector(
-      NamedBusConfig("m-pirro", 0 until 2)
+      NamedBusConfig("m-dpa"  , 0 until 2),
+      NamedBusConfig("m-pirro", 2 until 4),
     ),
     lineInputs      = Vector.empty,
     lineOutputs     = Vector.empty,
     device    = Some("Wolkenpumpe"),
-    database  = Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    database  = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
     timeline  = true
   )
 
-  private val config: Config = Pieces
+  private val config: Config = Rome
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {

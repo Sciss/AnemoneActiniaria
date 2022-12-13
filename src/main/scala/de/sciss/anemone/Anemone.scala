@@ -531,7 +531,9 @@ class Anemone[T <: Txn[T]](config: Anemone.Config) extends WolkenpumpeMain[T] {
     // sCfg.highPass           = 100
     sCfg.audioFilesFolder   = Some(userHome / "Music" / "tapes")
     sCfg.plugins            = true
-    sCfg.recDir             = file("/data/audio_work/nuages_test")
+    sCfg.recDir             = userHome / "Music" / "nuages_rec"
+
+    require (sCfg.recDir.isDirectory)
 
     // println(s"master max = ${Turbulence.ChannelIndices.max}")
     nCfg.mainChannels       = Some(config.masterChannels)

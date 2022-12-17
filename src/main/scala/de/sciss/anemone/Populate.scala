@@ -15,10 +15,10 @@ package de.sciss.anemone
 
 import de.sciss.lucre.Folder
 import de.sciss.lucre.synth.Txn
-import de.sciss.nuages.{Nuages, ScissProcs}
+import de.sciss.nuages.{DSL, Nuages, ScissProcs}
 import de.sciss.proc.Implicits._
 import de.sciss.proc.{ParamSpec, Warp}
-import de.sciss.{nuages, synth}
+import de.sciss.{nuages, proc, synth}
 
 object Populate {
 
@@ -41,9 +41,10 @@ object Populate {
     implicit val _n: Nuages[T] = n
     val dsl = nuages.DSL[T]
     import dsl._
-    import synth._
-    import ugen._
+    import synth.{proc => _, _}
     import Import._
+    import sConfig.genNumChannels
+    import ugen._
 
     Mutagens          (dsl, sConfig, nConfig)
     FifteenBeeThreeCee(dsl, sConfig, nConfig)
@@ -95,6 +96,31 @@ object Populate {
 //    procUniv.attr.put("file", cueUniv)
 
     // --------------- ANEMONE ----------------
+
+
+    def filterF(name: String)(fun: GE => GE): proc.Proc[T] =
+      filter(name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
+
+    def mix(in: GE, flt: GE, mix: GE): GE = LinXFade2.ar(in, flt, mix * 2 - 1)
+
+    def mkMix(df: Double = 0.0): GE = pAudio("mix", ParamSpec(0, 1), default(df))
+
+    filterF("lag") { in =>
+      val pUp     = pAudio("up", ParamSpec(0.001, 1000.0, Warp.Exp), default(1.0))
+      val pDn     = pAudio("dn", ParamSpec(0.001, 1000.0, Warp.Exp), default(1.0))
+      val pMode   = pAudio("mode", ParamSpec(0, 2, Warp.Int), default(0))
+      val min     = pUp min pDn
+      val max     = pUp max pDn
+      val isNorm  = pMode sig_== 0
+      val isMax   = pMode sig_== 1
+      val isMin   = pMode sig_== 2
+      val minMax  = min * isMin + max * isMax
+      val up      = pUp * isNorm + minMax // better to use Select?
+      val dn      = pDn * isNorm + minMax
+      val pMix    = mkMix()
+      val sig     = LagUD.ar(in, up, dn)
+      mix(in, sig, pMix)
+    }
 
     (nConfig.micInputs ++ nConfig.lineInputs).find(c => c.name == "i-mkv" || c.name == "beat").foreach { cfg =>
       generator("a~beat") {

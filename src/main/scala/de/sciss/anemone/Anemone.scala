@@ -457,7 +457,9 @@ object Anemone {
     timeline  = true
   )
 
-  private val config: Config = Rome
+  lazy val RomeTrainTest: Config = Rome.copy(masterChannels = 0 until 4)
+
+  private val config: Config = RomeTrainTest
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {

@@ -1,0 +1,27 @@
+a achil
+b
+c
+d dust
+e env perc
+f filt
+g gain
+h hilbert
+i
+j
+k skew
+l flip flop
+m multiply
+n notch
+o search for outputs
+p pulse (shift: a-pulse)
+q quatch
+r reso
+s sine (shift: a-sin)
+t
+u dup
+v div
+w
+x
+y
+z
+

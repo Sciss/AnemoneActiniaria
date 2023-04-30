@@ -459,7 +459,19 @@ object Anemone {
 
   lazy val RomeTrainTest: Config = Rome.copy(masterChannels = 0 until 4)
 
-  private val config: Config = RomeTrainTest
+  lazy val SimularrPupik: Config = Config(
+    masterChannels  = 0 until 2,
+    soloChannels    = 0 until 0,
+    genNumChannels  = 2,
+    micInputs       = Vector(),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device          = Some("Wolkenpumpe"),
+    database        = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline        = true
+  )
+
+  private val config: Config = SimularrPupik
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {

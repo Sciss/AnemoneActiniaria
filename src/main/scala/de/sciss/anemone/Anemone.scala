@@ -2,7 +2,7 @@
  *  Anemone.scala
  *  (Anemone-Actiniaria)
  *
- *  Copyright (c) 2014-2022 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2014-2024 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is published under the GNU General Public License v3+
  *
@@ -471,7 +471,21 @@ object Anemone {
     timeline        = true
   )
 
-  private val config: Config = SimularrPupik
+  lazy val Bologna: Config = Config(
+    masterChannels  = 0 until 2,
+    soloChannels    = 0 until 0,
+    genNumChannels  = 2,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa"  , 0 until 2),
+    ),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device          = Some("Wolkenpumpe"),
+    database        = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline        = true
+  )
+
+  private val config: Config = Bologna
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {

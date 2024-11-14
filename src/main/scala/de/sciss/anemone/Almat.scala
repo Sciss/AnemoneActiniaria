@@ -23,6 +23,8 @@ import de.sciss.{proc, synth}
 import de.sciss.synth.ugen._
 
 object Almat {
+  def hasHopfUGen: Boolean = false
+
   def any2stringadd: Any = ()
 
   def mkActions[T <: Txn[T]]()(implicit tx: T): Map[String, LObj[T]] = {
@@ -53,7 +55,7 @@ object Almat {
       LinXFade2.ar(in, flt, mix * 2 - 1)
     }
 
-    filterF("hopf") { in =>
+    if (hasHopfUGen) filterF("hopf") { in =>
       val pCoupling = pAudio("coup" , ParamSpec(0.0005, 0.05, Warp.Exponential), default(0.0005))
       val pRadius   = pAudio("rad"  , ParamSpec(0.0, 1.0), default(1.0))
       val pSelect   = pAudio("sel"  , ParamSpec(0.0, 3.0, Warp.Int), default(0.0))

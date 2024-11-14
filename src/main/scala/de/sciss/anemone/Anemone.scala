@@ -472,7 +472,7 @@ object Anemone {
   )
 
   lazy val Bologna: Config = Config(
-    masterChannels  = 0 until 2,
+    masterChannels  = 0 until 4,
     soloChannels    = 0 until 0,
     genNumChannels  = 2,
     micInputs         = Vector(

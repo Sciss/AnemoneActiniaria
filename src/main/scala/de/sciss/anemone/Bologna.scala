@@ -155,17 +155,17 @@ object Bologna {
     def collectorF(name: String)(fun: GE => Unit): proc.Proc[T] =
       collector   (name, if (DSL.useScanFixed) genNumChannels else -1)(fun)
 
-    collectorF("Ox-all") { in =>
+    collectorF("O-xall") { in =>
       val sig   = mkOutAll(in)
       val sigF  = mkFade(sig)
       mkDirectOut(sigF)
     }
-    collectorF("Ox-pan") { in =>
+    collectorF("O-xpan") { in =>
       val sig   = mkOutPan(in)
       val sigF  = mkFade(sig)
       mkDirectOut(sigF)
     }
-    collectorF("Ox-rnd") { in =>
+    collectorF("O-xrnd") { in =>
       val sig   = mkOutRnd(in)
       val sigF  = mkFade(sig)
       mkDirectOut(sigF)

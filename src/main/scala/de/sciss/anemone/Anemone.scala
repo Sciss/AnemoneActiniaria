@@ -485,7 +485,21 @@ object Anemone {
     timeline        = true
   )
 
-  private val config: Config = Bologna
+  lazy val QuARtier: Config = Config(
+    masterChannels  = 0 until 2,
+    soloChannels    = 0 until 0,
+    genNumChannels  = 2,
+    micInputs         = Vector(
+      NamedBusConfig("m-dpa"  , 0 until 2),
+    ),
+    lineInputs      = Vector.empty,
+    lineOutputs     = Vector.empty,
+    device          = Some("Wolkenpumpe"),
+    database        = None, // Some(mkDatabase(userHome/"Documents"/"projects"/"Anemone"/"sessions")),
+    timeline        = true
+  )
+
+  private val config: Config = QuARtier
 
   def mkSurface[T <: Txn[T]](config: Config)(implicit tx: T): Surface[T] =
     if (config.timeline) {
@@ -577,7 +591,7 @@ class Anemone[T <: Txn[T]](config: Anemone.Config) extends WolkenpumpeMain[T] {
   override protected def registerProcesses(nuages: Nuages[T], nCfg: Nuages.Config, sCfg: ScissProcs.Config)
                                  (implicit tx: T, universe: Universe[T]): Unit = {
     super.registerProcesses(nuages, nCfg, sCfg)
-    Populate(nuages, nCfg, sCfg)
+    Populate(nuages, this, nCfg, sCfg)
   }
 
   def initTablet(): Unit = {

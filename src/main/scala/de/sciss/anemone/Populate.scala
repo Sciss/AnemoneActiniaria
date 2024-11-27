@@ -15,7 +15,7 @@ package de.sciss.anemone
 
 import de.sciss.lucre.Folder
 import de.sciss.lucre.synth.Txn
-import de.sciss.nuages.{DSL, Nuages, ScissProcs}
+import de.sciss.nuages.{DSL, Nuages, ScissProcs, WolkenpumpeMain}
 import de.sciss.proc.Implicits._
 import de.sciss.proc.{ParamSpec, Warp}
 import de.sciss.{nuages, proc, synth}
@@ -36,7 +36,7 @@ object Populate {
       case _ => None
     }
 
-  def apply[T <: Txn[T]](n: Nuages[T], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
+  def apply[T <: Txn[T]](n: Nuages[T], nm: WolkenpumpeMain[T], nConfig: Nuages.Config, sConfig: ScissProcs.Config)
                         (implicit tx: T): Unit = {
     implicit val _n: Nuages[T] = n
     val dsl = nuages.DSL[T]
@@ -51,7 +51,8 @@ object Populate {
     Promenade         (dsl, sConfig, nConfig)
     Almat             (dsl, sConfig, nConfig)
     ShouldGens        (dsl, sConfig, nConfig)
-    Bologna           (dsl, sConfig, nConfig)
+//    Bologna           (dsl, sConfig, nConfig)
+    IMU_Reception (nm, dsl, sConfig, nConfig)
 //    PikselGens        (dsl, sConfig, nConfig)
 //    Imperfect         (dsl, sConfig, nConfig)
 //    Cracks            (dsl, sConfig, nConfig)
